@@ -73,6 +73,7 @@ static void roverJoystick_ENCODE(cJSON *STR_Payload) // 摇杆控制车
  */
 void Startup_CMD(void)
 {
+	SendStartupCMD();
 }
 
 /**
@@ -81,23 +82,9 @@ void Startup_CMD(void)
  */
 void Shutdown_CMD(void)
 {
+	SendPowerOffCMD();
 }
 
-/**
- * @description  : 开机程序
- * @return        {*}
- */
-void StartUp(void)
-{
-}
-
-/**
- * @description  : 关机程序
- * @return        {*}
- */
-void ShutDown(void)
-{
-}
 
 static void CHANGE_OBJECT_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 开关机
 {
