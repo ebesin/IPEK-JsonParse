@@ -82,6 +82,22 @@ uint8_t CanSendMsg(CantxMsg *txMessage)
 }
 
 //=============================================================================
+void SendStartupCMD(void)
+{
+  CanTMsg.MsgID = 2036;
+  CanTMsg.DataLength = 1;
+  CanTMsg.Data.c[0] = 1;
+  CanSendMsg(&CanTMsg);
+}
+//=============================================================================
+void SendPowerOffCMD(void)
+{
+  CanTMsg.MsgID = 2036;
+  CanTMsg.DataLength = 1;
+  CanTMsg.Data.c[0] = 0;
+  CanSendMsg(&CanTMsg);
+}
+//=============================================================================
 void SendPowerModeNormal(void)
 {
   CanTMsg.MsgID = CMSG_POWERMODE_CTRLINT;

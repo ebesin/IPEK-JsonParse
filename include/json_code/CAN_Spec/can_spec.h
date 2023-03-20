@@ -2,7 +2,7 @@
  * @Author       : iPEK
  * @Date         : 2023-03-07
  * @LastEditTime : 2023-03-10
- * @Description  : CAN解码、发送相关H文件，主要是配合上位机的CAN指令发送，文件内容已封装成材料中提供的内容
+ * @Description  : CAN解码、发送相关H文件，主要是配合上位机的CAN指令发送，文件内�?�已封�?�成材料�?提供的内�?
  *
  * Copyright (c) 2023 by iPEK, All Rights Reserved.
  */
@@ -833,5 +833,6 @@ extern void SendExtraLightEvent(SCHAR scV1);
 extern void SendCrawlerSpeedValue(SCHAR scV1, SCHAR scV2, UCHAR ucMode);
 extern void SendLaserPointEvent(SCHAR scV1);
 extern void SetLocatorConfigEvent(SCHAR uVal, SCHAR uVa2);
-
+extern void SendStartupCMD(void);
+extern void SendPowerOffCMD(void);
 #endif
