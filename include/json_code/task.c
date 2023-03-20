@@ -397,12 +397,13 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	cJSON_AddItemToObject(cjson_can, "payload", cjson_payload);
 
 	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
-	TCPSendBuff[strlen(TCPSendBuff)] = 0x0A;
+	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+	char *enter = "\n\0";
+	strncat(TCPSendBuff, enter, 2);
 	CAN_Cnt = strlen(TCPSendBuff);
 #if DEBUG
 	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
-#endif
-#if DEBUG
+
 	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
 #endif
 	/*-----------------
