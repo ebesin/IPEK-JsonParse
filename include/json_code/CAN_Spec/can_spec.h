@@ -835,4 +835,11 @@ extern void SendLaserPointEvent(SCHAR scV1);
 extern void SetLocatorConfigEvent(SCHAR uVal, SCHAR uVa2);
 extern void SendStartupCMD(void);
 extern void SendPowerOffCMD(void);
+extern void SendMainLightEvent(SCHAR scV1);
+extern void SendautoAngleMainLightsStatus(UCHAR ucMode);
+extern void SendautoAngleMainLightsValueInDegrees(SCHAR scV1);
+extern void SendReelPower(SCHAR scValue);
+extern void SendReelSpeed(SCHAR scValue);
+extern void SendReelFunctionCodeEvent(SCHAR scMode);
+extern void SendCameraJoystickEvent(SCHAR scV1, SCHAR scV2);
 #endif
