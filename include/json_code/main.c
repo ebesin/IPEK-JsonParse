@@ -15,7 +15,7 @@ int main()
 
 #if DEBUG
 	printf("%s \r\n", DecodeRECBuff);
-
+#endif
 	Scheduler_Decode(Str_Json);
 	Scheduler_Code(CodeRECBuff);
 	cJSON_Delete(Str_Json); // �ͷ��ڴ�
