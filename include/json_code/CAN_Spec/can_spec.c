@@ -82,6 +82,44 @@ uint8_t CanSendMsg(CantxMsg *txMessage)
 }
 
 //=============================================================================
+void SendReelFunctionCodeEvent(SCHAR scMode)
+{
+  CanTMsg.MsgID      = CMSG_REELFUNCTIONCODE_CTRLINT;
+  CanTMsg.DataLength = 1;
+  CanTMsg.Data.c[0]  = scMode;
+  CanSendMsg( &CanTMsg );
+}
+//=============================================================================
+void SendautoAngleMainLightsValueInDegrees(SCHAR scV1)
+{
+  CanTMsg.MsgID = 1604;
+  CanTMsg.DataLength = 3;
+  CanTMsg.Data.c[0] = 2;
+  CanTMsg.Data.c[1] = 6;
+  CanTMsg.Data.c[2] = scV1;
+  CanSendMsg(&CanTMsg);
+}
+//=============================================================================
+void SendautoAngleMainLightsStatus(UCHAR ucMode)
+{
+  CanTMsg.MsgID = 1604;
+  CanTMsg.DataLength = 3;
+  CanTMsg.Data.c[0] = 2;
+  CanTMsg.Data.c[1] = 1;
+  CanTMsg.Data.c[2] = ucMode;
+  CanSendMsg(&CanTMsg);
+}
+//=============================================================================
+void SendMainLightEvent(SCHAR scV1)
+{
+  CanTMsg.MsgID = 1604;
+  CanTMsg.DataLength = 3;
+  CanTMsg.Data.c[0] = 2;
+  CanTMsg.Data.c[1] = 3;
+  CanTMsg.Data.c[2] = scV1;
+  CanSendMsg(&CanTMsg);
+}
+//=============================================================================
 void SendStartupCMD(void)
 {
   CanTMsg.MsgID = 2036;

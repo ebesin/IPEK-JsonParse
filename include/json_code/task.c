@@ -15,7 +15,7 @@
 #include "../common/cJSON.h"
 #include "CAN_Spec/can_spec.h"
 
-void RockerConversion(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
+void RockerConversion_360(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
 {
 	//	angle = (angle<0)?0:(angle>360)?360:angle;
 
@@ -41,6 +41,66 @@ void RockerConversion(SCHAR *scV1, SCHAR *scV2, double angle, double power) // �
 	}
 }
 
+void RockerConversion_180_Camera(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
+{
+	//	angle = (angle<0)?0:(angle>360)?360:angle;]
+	//0-360
+	//270-270+360
+
+	angle -= 90;
+	if(angle<0)
+	angle+=360;
+	if ((angle >= 0) && (angle <= 90))
+	{
+		*scV1 = (SCHAR)(power * 100 / 90 * angle);
+		*scV2 = (SCHAR)(power * (100 - 100 / 90 * angle));
+	}
+	else if ((angle < 180))
+	{
+		*scV1 = (SCHAR)(power*(200-100/90*angle));
+		*scV2 = (SCHAR)(power*(100-100/90*angle));
+	}
+	else if (angle < 270)
+	{
+		*scV1 = (SCHAR)(power*(200-100/90*angle));
+		*scV2 = (SCHAR)(power *(100/90*angle-300));
+	}
+	else if (angle < 360)
+	{
+		*scV1 = (SCHAR)(power*(100/90*angle-400));
+		*scV2 = (SCHAR)(power *(100/90*angle-300));
+	}
+}
+void RockerConversion_180_Car(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
+{
+	//	angle = (angle<0)?0:(angle>360)?360:angle;]
+	//0-360
+	//270-270+360
+
+	angle -= 90;
+	if(angle<0)
+	angle+=360;
+	if ((angle >= 0) && (angle < 90))
+	{
+		*scV1 = (SCHAR)(power * 100);
+		*scV2 = (SCHAR)(power * (100 - 200 / 90.0 * angle));
+	}
+	else if ((angle < 180))
+	{
+		*scV1 = (SCHAR)(power * (300 - 200 / 90.0 * angle));
+		*scV2 = (SCHAR)(-power * 100);
+	}
+	else if (angle < 270)
+	{
+		*scV1 = (SCHAR)(-power * 100);
+		*scV2 = (SCHAR)(power * (200 / 90.0 * angle - 500));
+	}
+	else if (angle < 360)
+	{
+		*scV1 = (SCHAR)(power * (200 / 90.0 * angle - 700));
+		*scV2 = (SCHAR)(power * 100);
+	}
+}
 /**
  * @description  : 右侧操纵杆（控制小车）
  * @param         {cJSON*} STR_Payload:"payload":{"value":{"angle":57,"power":1},"what":"roverJoystick"}}
@@ -56,7 +116,7 @@ static void roverJoystick_ENCODE(cJSON *STR_Payload) // 摇杆控制车
 	double str_payload_power = cJSON_GetObjectItem(str_value, "power")->valuedouble;
 	SCHAR str_payload_scV1, str_payload_scV2;
 
-	RockerConversion(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
+	RockerConversion_180_Car(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
 #if DEBUG
 	printf("angle:%.2f  power:%.2f scV1:%d scV2:%d\r\n", str_payload_angle, str_payload_power, str_payload_scV1, str_payload_scV2);
 #endif
@@ -159,7 +219,7 @@ static void localizerFrequency_ENCODE(cJSON *STR_Payload) // 激光控制
  *				  value: 辅助光源灯光强度值，强度值范围0% - 100%
  * @return        {*}
  */
-static void auxiliaryLights_ENCODE(cJSON *STR_Payload) // 前后辅助光源
+static void auxiliaryLightsValueInPercent_ENCODE(cJSON *STR_Payload) // 前后辅助光源
 {
 
 	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
@@ -168,6 +228,146 @@ static void auxiliaryLights_ENCODE(cJSON *STR_Payload) // 前后辅助光源
 	SendExtraLightEvent(str_payload_value);
 #if DEBUG
 	printf("auxiliaryLights_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 主灯控制（前后主灯）
+ * @param         {cJSON*} STR_Payload:"payload":{"value":26,"what":"highBeamMainLightsValueInPercent"}
+ *				  what: 自定义组件名称
+ *				  value: 主灯灯光强度值，强度值范围0% - 100%
+ * @return        {*}
+ */
+static void highBeamMainLightsValueInPercent_ENCODE(cJSON *STR_Payload) // 主灯控制（前后主灯）
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	str_payload_value = (str_payload_value < 0) ? 0 : (str_payload_value > 100) ? 100
+																				: str_payload_value;
+	SendMainLightEvent(str_payload_value);
+#if DEBUG
+	printf("highBeamMainLightsValueInPercent_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 自动灯光切换按钮
+ * @param         {cJSON*} STR_Payload:"payload":{"value":26,"what":"highBeamMainLightsValueInPercent"}
+ *				  what: 自定义组件名称
+ *				  value: true/false 自动灯光开启和关闭
+ * @return        {*}
+ */
+static void autoAngleMainLightsStatus_ENCODE(cJSON *STR_Payload) // 自动灯光切换按钮
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	SendautoAngleMainLightsStatus(str_payload_value);
+#if DEBUG
+	printf("autoAngleMainLightsStatus_ENCODE\r\n");
+#endif
+}
+
+
+/**
+ * @description  : 近光灯控制
+ * @param         {cJSON*} STR_Payload:"payload":{"value":30,"what":"autoAngleMainLightsValueInDegrees"}
+ *				  what: 自定义组件名称
+ *				  value: 角度调价值范围0 - 45°
+ * @return        {*}
+ */
+static void autoAngleMainLightsValueInDegrees_ENCODE(cJSON *STR_Payload) // 近光灯控制
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	str_payload_value = (str_payload_value < 0) ? 0 : (str_payload_value > 45) ? 45
+																				: str_payload_value;
+	SendautoAngleMainLightsValueInDegrees(str_payload_value);
+#if DEBUG
+	printf("autoAngleMainLightsValueInDegrees_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 自动模式，线缆盘张力控制
+ * @param         {cJSON*} STR_Payload:"payload":{"value":1,"what":"cableReelPower"}
+ *				  what: 自定义组件名称
+ *				  value: 提升张力指令（发送具体张力值，张力值范围0% - 100%，待UI更新）
+ * @return        {*}
+ */
+static void cableReelPower_ENCODE(cJSON *STR_Payload) // 自动模式，线缆盘张力控制
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	str_payload_value = (str_payload_value < 0) ? 0 : (str_payload_value > 100) ? 100
+																				: str_payload_value;
+	SendReelPower(str_payload_value);
+#if DEBUG
+	printf("cableReelPower_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 手动模式，线缆盘速度控制
+ * @param         {cJSON*} STR_Payload:"payload":{"value":1,"what":"cableReelPower"}
+ *				  what: 自定义组件名称
+ *				  value: 提升速度指令（发送具体速度值，速度值范围-100% - 100%，待UI更新）
+ * @return        {*}
+ */
+static void cableReelSpeed_ENCODE(cJSON *STR_Payload) // 手动模式，线缆盘速度控制
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	str_payload_value = (str_payload_value < -100) ? -100 : (str_payload_value > 100) ? 100
+																				: str_payload_value;
+	SendReelSpeed(str_payload_value);
+#if DEBUG
+	printf("cableReelSpeed_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 手动模式自动模式切换按钮
+ * @param         {cJSON*} STR_Payload:"payload":{"value":"manual","what":"cableReelType"}
+ *				  what: 自定义组件名称
+ *				  value: automatic为自动模式，manual为手动模式
+ * @return        {*}
+ */
+static void cableReelType_ENCODE(cJSON *STR_Payload) // 手动模式自动模式切换按钮
+{
+
+	char *str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valuestring;
+	if (strcmp(str_payload_value, "automatic") == 0) // 
+	SendReelFunctionCodeEvent(0);
+	else
+	SendReelFunctionCodeEvent(1);
+#if DEBUG
+	printf("cableReelType_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 左侧操纵杆（控制摄像头）
+ * @param         {cJSON*} STR_Payload:"payload":{"value":{"angle":-60.945395900922854,"power":0.46330335634441494},"what":"cameraJoystick"}
+ *				  angle: 操纵杆转动角度（顺时针角度）
+ *  			  what: 自定义组件名称
+ * 				  power: 按压力度
+ * @return        {*}
+ */
+static void cameraJoystick_ENCODE(cJSON *STR_Payload) // 左侧操纵杆（控制摄像头）
+{
+	cJSON *str_value = cJSON_GetObjectItem(STR_Payload, "value");
+	double str_payload_angle = cJSON_GetObjectItem(str_value, "angle")->valuedouble;
+	double str_payload_power = cJSON_GetObjectItem(str_value, "power")->valuedouble;
+	SCHAR str_payload_scV1, str_payload_scV2;
+
+	RockerConversion_180_Camera(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
+#if DEBUG
+	printf("angle:%.2f  power:%.2f scV1:%d scV2:%d\r\n", str_payload_angle, str_payload_power, str_payload_scV1, str_payload_scV2);
+#endif
+	SendCameraJoystickEvent(str_payload_scV1, str_payload_scV2);
+
+#if DEBUG
+	printf("MOVE_OBJECT_REQ_ENCODE\r\n");
 #endif
 }
 
@@ -180,10 +380,20 @@ static void auxiliaryLights_ENCODE(cJSON *STR_Payload) // 前后辅助光源
  */
 static JsonDecode_task_t Update_Value_tasks[] = // 从上往下代表优先级
 	{
-		{roverJoystick_ENCODE, "roverJoystick"},		   // 摇杆控制车
-		{auxiliaryLights_ENCODE, "auxiliaryLights"},	   // 前后辅助光源
-		{laserIntensity_ENCODE, "laserIntensity"},		   // 激光控制
-		{localizerFrequency_ENCODE, "localizerFrequency"}, // 左侧定位功能
+		{cameraJoystick_ENCODE, "cameraJoystick"},										// 左侧操纵杆（控制摄像头）
+		{roverJoystick_ENCODE, "roverJoystick"},		   								// 摇杆控制车
+		{auxiliaryLightsValueInPercent_ENCODE, "auxiliaryLightsValueInPercent"},	   	// 前后辅助光源
+		{laserIntensity_ENCODE, "laserIntensity"},		   								// 激光控制
+		{localizerFrequency_ENCODE, "localizerFrequency"}, 								// 左侧定位功能
+		{highBeamMainLightsValueInPercent_ENCODE, "highBeamMainLightsValueInPercent"}, 	// 主灯控制（前后主灯）
+		{autoAngleMainLightsStatus_ENCODE, "autoAngleMainLightsStatus"}, 				// 自动灯光切换按钮
+		{autoAngleMainLightsValueInDegrees_ENCODE, "autoAngleMainLightsValueInDegrees"},// 近光灯控制
+		{cableReelPower_ENCODE, "cableReelPower"},										// 自动模式，线缆盘张力控制
+		{cableReelSpeed_ENCODE, "cableReelSpeed"},										// 手动模式，线缆盘速度控制
+		{cableReelType_ENCODE, "cableReelType"},										// 手动模式自动模式切换按钮
+
+
+
 };
 
 /**
@@ -215,6 +425,51 @@ static void UPDATE_VALUE_ENCODE(cJSON *STR_Payload) // 光源控制
 #endif
 }
 
+
+#define ActionCOMMAND_NUM (sizeof(Action_tasks) / sizeof(JsonDecode_task_t))
+/**
+ * @description  : 结构体数组，同属Update中的二级子指令，根据what值做二级判断
+ * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
+ *				 messageName[30]：指令名称
+ *
+ */
+static JsonDecode_task_t Action_tasks[] = // 从上往下代表优先级
+{
+		{cableReelType_ENCODE, "reset"},											// 摄像头恢复正常
+
+
+};
+/**
+ * @description  : ACTION解析，二级判断
+ * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
+ * @return        {*}
+ */
+static void ACTION_ENCODE(cJSON *STR_Payload) // action
+{
+	char *str_Payload_what = cJSON_GetObjectItem(STR_Payload, "action")->valuestring;
+	for (uint8_t index = 0; index < UpdateValueCOMMAND_NUM; index++)
+	{
+		if (strcmp(str_Payload_what, Action_tasks[index].messageName) == 0) // 找到对应指令
+		{
+			// 执行线程函数，使用的是函数指针
+			Action_tasks[index].decode_func(STR_Payload);
+			break;
+		}
+		if (index == ActionCOMMAND_NUM - 1)
+		{
+#if DEBUG
+			printf("ACTION指令错误\r\n");
+#endif
+		}
+	}
+
+#if DEBUG
+	printf("ACTION_ENCODE\r\n");
+#endif
+}
+
+
+
 /**
  * @description  : 结构体数组，一级指令，根据messageName值做一级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
@@ -224,7 +479,8 @@ static void UPDATE_VALUE_ENCODE(cJSON *STR_Payload) // 光源控制
 JsonDecode_task_t JsonDecode_tasks[] = // 从上往下代表优先级
 	{
 		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"}, // 开关机
-		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"}						 // 光源控制
+		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},						 // UPDATE_VALUE
+		{ACTION_ENCODE, "ACTION"},						 		 	 // UPDATE_VALUE
 };
 
 #define COMMAND_NUM (sizeof(JsonDecode_tasks) / sizeof(JsonDecode_task_t))
