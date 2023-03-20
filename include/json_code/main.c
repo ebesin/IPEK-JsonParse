@@ -3,8 +3,17 @@
 #include <string.h>
 //{"header":{"messageId":6,"messageName":"UPDATE_VALUE","messageType":"IPEK_CHINA_GUI"},"payload":{"value":"50%","what":"laserIntensity"}}
 // "{\"header\":{\"messageId\":102,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":57,\"power\":1},\"what\":\"roverJoystick\"}}"	//�Ҳ���ݸˣ�����С����
-//"{\"header\":{\"messageId\":5,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":1,\"what\":\"auxiliaryLights\"}}"	//
-char DecodeRECBuff[500] = "{\"header\":{\"messageId\":24,\"messageName\":\"CHANGE_OBJECT_VALUE_REQ\",\"messageType\":\"CONTROL\"},\"payload\":{\"object\":\"powerSwitch\",\"value\":false}}"; // �������ݴ����
+//"{\"header\":{\"messageId\":5,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":1,\"what\":\"auxiliaryLightsValueInPercent\"}}"	//
+//{\"header\":{\"messageId\":36,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":30,\"what\":\"autoAngleMainLightsValueInDegrees\"}}
+//{\"header\":{\"messageId\":641,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":1,\"what\":\"cableReelPower\"}}
+//{\"header\":{\"messageId\":648,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":-13,\"what\":\"cableReelSpeed\"}}
+//{\"header\":{\"messageId\":649,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":\"manual\",\"what\":\"cableReelType\"}}
+// {\"header\":{\"messageId\":665,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":-60.945395900922854,\"power\":0.46330335634441494},\"what\":\"cameraJoystick\"}}
+
+
+
+//{\"header\":{\"messageId\":696,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":-98.10724803565803,\"power\":1},\"what\":\"roverJoystick\"}}
+char DecodeRECBuff[500] = " {\"header\":{\"messageId\":696,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":90,\"power\":1},\"what\":\"roverJoystick\"}}"; // �������ݴ����
 char CodeRECBuff[500] = {0x55, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x58, 0x39, 0x08, 0x40};
 
 int main()
