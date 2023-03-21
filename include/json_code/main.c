@@ -43,5 +43,6 @@ int main()
 #endif
 	Scheduler_Decode(Str_Json);
 	Scheduler_Code(CodeRECBuff);
+	Scheduler_Decode(Str_Json);
 	cJSON_Delete(Str_Json); // �ͷ��ڴ�
 }
