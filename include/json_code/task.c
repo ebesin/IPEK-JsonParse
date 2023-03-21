@@ -71,12 +71,33 @@ void RockerConversion_180_Camera(SCHAR *scV1, SCHAR *scV2, double angle, double 
 		*scV2 = (SCHAR)(power *(100/90*angle-300));
 	}
 }
+
+void RockerConversion_180_Camera_Test(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
+{
+	if ((angle >= -45) && (angle < 45))
+	{
+		*scV1 = (SCHAR)(power * 100);
+		*scV2 = (SCHAR)(0);
+	}
+	else if ((angle < -45) && (angle >= -135))
+	{
+		*scV1 = (SCHAR)(0);
+		*scV2 = (SCHAR)(power * 100);
+	}
+	else if ((angle >= 135)||(angle < -135))
+	{
+		*scV1 = (SCHAR)(-power * 100);
+		*scV2 = (SCHAR)(0);
+	}
+	else if ((angle < 135)&&(angle >= 45))
+	{
+		*scV1 = (SCHAR)(0);
+		*scV2 = (SCHAR)(-power*100);
+	}
+}
+
 void RockerConversion_180_Car(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
 {
-	//	angle = (angle<0)?0:(angle>360)?360:angle;]
-	//0-360
-	//270-270+360
-
 	angle -= 90;
 	if(angle<0)
 	angle+=360;
@@ -101,6 +122,31 @@ void RockerConversion_180_Car(SCHAR *scV1, SCHAR *scV2, double angle, double pow
 		*scV2 = (SCHAR)(power * 100);
 	}
 }
+
+void RockerConversion_180_Car_Test(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
+{
+	if ((angle >= -45) && (angle < 45))
+	{
+		*scV1 = (SCHAR)(power * 100);
+		*scV2 = (SCHAR)(- power * 100);
+	}
+	else if ((angle < -45) && (angle >= -135))
+	{
+		*scV1 = (SCHAR)(power * 100);
+		*scV2 = (SCHAR)(power * 100);
+	}
+	else if ((angle >= 135)||(angle < -135))
+	{
+		*scV1 = (SCHAR)(-power * 100);
+		*scV2 = (SCHAR)(power * 100);
+	}
+	else if ((angle < 135)&&(angle >= 45))
+	{
+		*scV1 = (SCHAR)( -power*100);
+		*scV2 = (SCHAR)(-power*100);
+	}
+}
+
 /**
  * @description  : 右侧操纵杆（控制小车）
  * @param         {cJSON*} STR_Payload:"payload":{"value":{"angle":57,"power":1},"what":"roverJoystick"}}
@@ -116,7 +162,7 @@ static void roverJoystick_ENCODE(cJSON *STR_Payload) // 摇杆控制车
 	double str_payload_power = cJSON_GetObjectItem(str_value, "power")->valuedouble;
 	SCHAR str_payload_scV1, str_payload_scV2;
 
-	RockerConversion_180_Car(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
+	RockerConversion_180_Car_Test(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
 #if DEBUG
 	printf("angle:%.2f  power:%.2f scV1:%d scV2:%d\r\n", str_payload_angle, str_payload_power, str_payload_scV1, str_payload_scV2);
 #endif
@@ -360,7 +406,7 @@ static void cameraJoystick_ENCODE(cJSON *STR_Payload) // 左侧操纵杆（控�
 	double str_payload_power = cJSON_GetObjectItem(str_value, "power")->valuedouble;
 	SCHAR str_payload_scV1, str_payload_scV2;
 
-	RockerConversion_180_Camera(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
+	RockerConversion_180_Camera_Test(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
 #if DEBUG
 	printf("angle:%.2f  power:%.2f scV1:%d scV2:%d\r\n", str_payload_angle, str_payload_power, str_payload_scV1, str_payload_scV2);
 #endif
@@ -368,6 +414,44 @@ static void cameraJoystick_ENCODE(cJSON *STR_Payload) // 左侧操纵杆（控�
 
 #if DEBUG
 	printf("MOVE_OBJECT_REQ_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 开启/关闭定速巡航
+ * @param         {cJSON*} STR_Payload:"payload":{"value":true,"what":"cruiseControlStatus"}
+ *				  what: 自定义组件名称
+ *				  value: true为开启定速巡航，false为关闭定速巡航（操作小车Joystick会自动发送取消定速巡航指令）
+ * @return        {*}
+ */
+static void cruiseControlStatus_ENCODE(cJSON *STR_Payload) // 开启/关闭定速巡航
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	if (str_payload_value) // 
+	SendCrawlerSpeedValue(0,0,1);
+	else
+	SendCrawlerSpeedValue(0,0,0);
+#if DEBUG
+	printf("cruiseControlStatus_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 设置定速巡航速度值
+ * @param         {cJSON*} STR_Payload:"payload":{"value":true,"what":"cruiseControlStatus"}
+ *				  what: 自定义组件名称
+ *				  value: 设置定速巡航速度值
+ * @return        {*}
+ */
+static void cruiseControlValue_ENCODE(cJSON *STR_Payload) // 设置定速巡航速度值
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+
+	SendCrawlerSpeedValue(str_payload_value,str_payload_value,1);
+#if DEBUG
+	printf("cruiseControlValue_ENCODE\r\n");
 #endif
 }
 
@@ -391,6 +475,8 @@ static JsonDecode_task_t Update_Value_tasks[] = // 从上往下代表优先级
 		{cableReelPower_ENCODE, "cableReelPower"},										// 自动模式，线缆盘张力控制
 		{cableReelSpeed_ENCODE, "cableReelSpeed"},										// 手动模式，线缆盘速度控制
 		{cableReelType_ENCODE, "cableReelType"},										// 手动模式自动模式切换按钮
+		{cruiseControlStatus_ENCODE, "cruiseControlStatus"},							// 开启/关闭定速巡航
+		{cruiseControlValue_ENCODE, "cruiseControlValue"},								// 设置定速巡航速度值
 
 
 
@@ -404,6 +490,8 @@ static JsonDecode_task_t Update_Value_tasks[] = // 从上往下代表优先级
 static void UPDATE_VALUE_ENCODE(cJSON *STR_Payload) // 光源控制
 {
 	char *str_Payload_what = cJSON_GetObjectItem(STR_Payload, "what")->valuestring;
+	if (!str_Payload_what)
+		return;	
 	for (uint8_t index = 0; index < UpdateValueCOMMAND_NUM; index++)
 	{
 		if (strcmp(str_Payload_what, Update_Value_tasks[index].messageName) == 0) // 找到对应指令
@@ -425,20 +513,83 @@ static void UPDATE_VALUE_ENCODE(cJSON *STR_Payload) // 光源控制
 #endif
 }
 
-
-#define ActionCOMMAND_NUM (sizeof(Action_tasks) / sizeof(JsonDecode_task_t))
 /**
- * @description  : 结构体数组，同属Update中的二级子指令，根据what值做二级判断
+ * @description  : 'reset' 摄像头恢复正常
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action: 'reset' 摄像头恢复正常
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void camera_reset_ENCODE(cJSON *STR_Payload) // 'reset' 摄像头恢复正常
+{
+	SendCameraHomePositionEvent();
+#if DEBUG
+	printf("camera_reset_ENCODE\r\n");
+#endif
+}
+
+
+/**
+ * @description  : 结构体数组，同属what中的二级子指令，根据what值做二级判断
+ * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
+ *				 messageName[30]：指令名称
+ *
+ */
+static JsonDecode_task_t action_tasks[] = // 从上往下代表优先级
+{
+		{camera_reset_ENCODE, "reset"},											// 摄像头恢复正常
+
+
+};
+#define actionCOMMAND_NUM (sizeof(action_tasks) / sizeof(JsonDecode_task_t))
+/**
+ * @description  : what解析，三级判断
+ * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
+ * @return        {*}
+ */
+static void camera_ENCODE(cJSON *STR_Payload) // action
+{
+	char *str_Payload_action = cJSON_GetObjectItem(STR_Payload, "action")->valuestring;
+	if (!str_Payload_action)
+		return;	
+	
+	for (uint8_t index = 0; index < UpdateValueCOMMAND_NUM; index++)
+	{
+		if (strcmp(str_Payload_action, action_tasks[index].messageName) == 0) // 找到对应指令
+		{
+			// 执行线程函数，使用的是函数指针
+			action_tasks[index].decode_func(STR_Payload);
+			break;
+		}
+		if (index == actionCOMMAND_NUM - 1)
+		{
+#if DEBUG
+			printf("ACTION指令错误\r\n");
+#endif
+		}
+	}
+
+#if DEBUG
+	printf("camera_ENCODE\r\n");
+#endif
+}
+
+
+
+/**
+ * @description  : 结构体数组，同属what中的二级子指令，根据what值做二级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
  *				 messageName[30]：指令名称
  *
  */
 static JsonDecode_task_t Action_tasks[] = // 从上往下代表优先级
 {
-		{cableReelType_ENCODE, "reset"},											// 摄像头恢复正常
+		{camera_ENCODE, "camera"},											// 摄像头恢复正常
 
 
 };
+#define ActionCOMMAND_NUM (sizeof(Action_tasks) / sizeof(JsonDecode_task_t))
+
 /**
  * @description  : ACTION解析，二级判断
  * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
@@ -446,10 +597,13 @@ static JsonDecode_task_t Action_tasks[] = // 从上往下代表优先级
  */
 static void ACTION_ENCODE(cJSON *STR_Payload) // action
 {
-	char *str_Payload_what = cJSON_GetObjectItem(STR_Payload, "action")->valuestring;
-	for (uint8_t index = 0; index < UpdateValueCOMMAND_NUM; index++)
+	char *str_Payload_action = cJSON_GetObjectItem(STR_Payload, "what")->valuestring;
+	if (!str_Payload_action)
+		return;	
+	
+	for (uint8_t index = 0; index < ActionCOMMAND_NUM; index++)
 	{
-		if (strcmp(str_Payload_what, Action_tasks[index].messageName) == 0) // 找到对应指令
+		if (strcmp(str_Payload_action, Action_tasks[index].messageName) == 0) // 找到对应指令
 		{
 			// 执行线程函数，使用的是函数指针
 			Action_tasks[index].decode_func(STR_Payload);
@@ -468,7 +622,36 @@ static void ACTION_ENCODE(cJSON *STR_Payload) // action
 #endif
 }
 
+/**
+ * @description  : 'reset' 摄像头恢复正常
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action: 'reset' 摄像头恢复正常
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void CHANGE_OBJECT_VALUE_RESP_ENCODE(cJSON *STR_Payload) // 'reset' 摄像头恢复正常
+{
+	SendCameraZoomEvent(100);
+#if DEBUG
+	printf("CHANGE_OBJECT_VALUE_RESP_ENCODE\r\n");
+#endif
+}
 
+
+/**
+ * @description  : 'reset' 摄像头恢复正常
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action: 'reset' 摄像头恢复正常
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void EMERGENCY_STOP_ENCODE(cJSON *STR_Payload) // 'reset' 摄像头恢复正常
+{
+	SendFullStop();
+#if DEBUG
+	printf("EMERGENCY_STOP_ENCODE\r\n");
+#endif
+}
 
 /**
  * @description  : 结构体数组，一级指令，根据messageName值做一级判断
@@ -479,8 +662,10 @@ static void ACTION_ENCODE(cJSON *STR_Payload) // action
 JsonDecode_task_t JsonDecode_tasks[] = // 从上往下代表优先级
 	{
 		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"}, // 开关机
+		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"}, 					 // Full stop		
 		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},						 // UPDATE_VALUE
-		{ACTION_ENCODE, "ACTION"},						 		 	 // UPDATE_VALUE
+		{ACTION_ENCODE, "ACTION"},						 		 	 // ACTION
+		{CHANGE_OBJECT_VALUE_RESP_ENCODE, "CHANGE_OBJECT_VALUE_RESP"},// ACTION
 };
 
 #define COMMAND_NUM (sizeof(JsonDecode_tasks) / sizeof(JsonDecode_task_t))

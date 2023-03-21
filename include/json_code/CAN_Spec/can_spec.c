@@ -42,7 +42,6 @@ uint8_t CanSendMsg(CantxMsg *txMessage)
     TxMessage.StdId = txMessage->MsgID;
   }
 
-  TxMessage.StdId = txMessage->MsgID;
   TxMessage.IDE = CAN_ID_STD;
   TxMessage.RTR = CAN_RTR_DATA;
   TxMessage.DLC = txMessage->DataLength;
@@ -80,7 +79,14 @@ uint8_t CanSendMsg(CantxMsg *txMessage)
 #endif
   sendToRobot(UDPSendBuff, WiFiToCanBuff_Cnt);
 }
-
+//=============================================================================
+void SendFullStop(void)
+{
+  CanTMsg.MsgID      = 2116;
+  CanTMsg.DataLength = 8;
+  CanTMsg.Data.c[7]  = 1;
+  CanSendMsg( &CanTMsg );
+}
 //=============================================================================
 void SendReelFunctionCodeEvent(SCHAR scMode)
 {
