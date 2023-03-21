@@ -79,6 +79,30 @@ uint8_t CanSendMsg(CantxMsg *txMessage)
 #endif
   sendToRobot(UDPSendBuff, WiFiToCanBuff_Cnt);
 }
+
+//=============================================================================
+void SendClutchOpen(CHAR cOnOff)
+{
+  CanTMsg.MsgID = CMSG_SETCTRLSOURCEINT;
+  CanTMsg.DataLength = 2;
+  CanTMsg.Data.c[0] = 1;
+  CanTMsg.Data.c[1] = cOnOff;
+  CanSendMsg(&CanTMsg);
+
+  CanTMsg.MsgID = CMSG_CRAWLERCLUTCH;
+  CanTMsg.DataLength = 2;
+  CanTMsg.Data.c[0] = 1;
+  CanTMsg.Data.c[1] = cOnOff;
+  CanSendMsg(&CanTMsg);
+}
+//=============================================================================
+void SendFastFocusEvent(SCHAR scV1)
+{
+  CanTMsg.MsgID      = CMSG_FOCUSSPEED_CTRLINT;//0x154=340
+  CanTMsg.DataLength = 1;   
+  CanTMsg.Data.c[0]  = scV1; 
+  CanSendMsg( &CanTMsg );                                         
+}
 //=============================================================================
 void SendFullStop(void)
 {
@@ -122,6 +146,16 @@ void SendMainLightEvent(SCHAR scV1)
   CanTMsg.DataLength = 3;
   CanTMsg.Data.c[0] = 2;
   CanTMsg.Data.c[1] = 3;
+  CanTMsg.Data.c[2] = scV1;
+  CanSendMsg(&CanTMsg);
+}
+//=============================================================================
+void SendlowBeamMainLightsEvent(SCHAR scV1)
+{
+  CanTMsg.MsgID = 1604;
+  CanTMsg.DataLength = 3;
+  CanTMsg.Data.c[0] = 2;
+  CanTMsg.Data.c[1] = 2;
   CanTMsg.Data.c[2] = scV1;
   CanSendMsg(&CanTMsg);
 }
