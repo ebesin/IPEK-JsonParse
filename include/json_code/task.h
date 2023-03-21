@@ -19,6 +19,12 @@ typedef union
 	float value;
 } DataToFloat;
 
+typedef union
+{
+	uint8_t data[2];
+	uint16_t value;
+} DataTouInt16_t;
+
 /**
  * @description  : Json编码、解码相关全局变量
  */
