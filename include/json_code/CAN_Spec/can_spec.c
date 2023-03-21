@@ -79,6 +79,10 @@ uint8_t CanSendMsg(CantxMsg *txMessage)
   printf("\r\n");
 #endif
   sendToRobot(UDPSendBuff, WiFiToCanBuff_Cnt);
+  for (uint8_t i = 0; i < TxMessage.DLC; i++)
+  {
+    txMessage->Data.c[i] = 0;
+  }
 }
 
 //=============================================================================
