@@ -71,12 +71,33 @@ void RockerConversion_180_Camera(SCHAR *scV1, SCHAR *scV2, double angle, double 
 		*scV2 = (SCHAR)(power *(100/90*angle-300));
 	}
 }
+
+void RockerConversion_180_Camera_Test(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
+{
+	if ((angle >= -45) && (angle < 45))
+	{
+		*scV1 = (SCHAR)(power * 100);
+		*scV2 = (SCHAR)(0);
+	}
+	else if ((angle < -45) && (angle >= -135))
+	{
+		*scV1 = (SCHAR)(0);
+		*scV2 = (SCHAR)(power * 100);
+	}
+	else if ((angle >= 135)||(angle < -135))
+	{
+		*scV1 = (SCHAR)(-power * 100);
+		*scV2 = (SCHAR)(0);
+	}
+	else if ((angle < 135)&&(angle >= 45))
+	{
+		*scV1 = (SCHAR)(0);
+		*scV2 = (SCHAR)(-power*100);
+	}
+}
+
 void RockerConversion_180_Car(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
 {
-	//	angle = (angle<0)?0:(angle>360)?360:angle;]
-	//0-360
-	//270-270+360
-
 	angle -= 90;
 	if(angle<0)
 	angle+=360;
@@ -101,6 +122,31 @@ void RockerConversion_180_Car(SCHAR *scV1, SCHAR *scV2, double angle, double pow
 		*scV2 = (SCHAR)(power * 100);
 	}
 }
+
+void RockerConversion_180_Car_Test(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
+{
+	if ((angle >= -45) && (angle < 45))
+	{
+		*scV1 = (SCHAR)(power * 100);
+		*scV2 = (SCHAR)(- power * 100);
+	}
+	else if ((angle < -45) && (angle >= -135))
+	{
+		*scV1 = (SCHAR)(power * 100);
+		*scV2 = (SCHAR)(power * 100);
+	}
+	else if ((angle >= 135)||(angle < -135))
+	{
+		*scV1 = (SCHAR)(-power * 100);
+		*scV2 = (SCHAR)(power * 100);
+	}
+	else if ((angle < 135)&&(angle >= 45))
+	{
+		*scV1 = (SCHAR)( -power*100);
+		*scV2 = (SCHAR)(-power*100);
+	}
+}
+
 /**
  * @description  : 右侧操纵杆（控制小车）
  * @param         {cJSON*} STR_Payload:"payload":{"value":{"angle":57,"power":1},"what":"roverJoystick"}}
@@ -116,7 +162,7 @@ static void roverJoystick_ENCODE(cJSON *STR_Payload) // 摇杆控制车
 	double str_payload_power = cJSON_GetObjectItem(str_value, "power")->valuedouble;
 	SCHAR str_payload_scV1, str_payload_scV2;
 
-	RockerConversion_180_Car(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
+	RockerConversion_180_Car_Test(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
 #if DEBUG
 	printf("angle:%.2f  power:%.2f scV1:%d scV2:%d\r\n", str_payload_angle, str_payload_power, str_payload_scV1, str_payload_scV2);
 #endif
@@ -360,7 +406,7 @@ static void cameraJoystick_ENCODE(cJSON *STR_Payload) // 左侧操纵杆（控�
 	double str_payload_power = cJSON_GetObjectItem(str_value, "power")->valuedouble;
 	SCHAR str_payload_scV1, str_payload_scV2;
 
-	RockerConversion_180_Camera(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
+	RockerConversion_180_Camera_Test(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
 #if DEBUG
 	printf("angle:%.2f  power:%.2f scV1:%d scV2:%d\r\n", str_payload_angle, str_payload_power, str_payload_scV1, str_payload_scV2);
 #endif

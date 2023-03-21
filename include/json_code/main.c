@@ -20,9 +20,9 @@
 
 
 //{\"header\":{\"messageId\":696,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":-98.10724803565803,\"power\":1},\"what\":\"roverJoystick\"}}
-char DecodeRECBuff[500] = "{\"header\":{\"messageId\":711,\"messageName\":\"EMERGENCY_STOP\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{}}"; // �������ݴ����
+char DecodeRECBuff[500] = "{\"header\":{\"messageId\":665,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":-60.945395900922854,\"power\":1},\"what\":\"cameraJoystick\"}}"; // �������ݴ����
 char CodeRECBuff[500] = {0x55, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x58, 0x39, 0x08, 0x40};
-
+/*---------https://www.yuque.com/alipaylextv5b0d6/ps8gp4/kgtemy2mo33s7elo---------------*/
 int main()
 {
 	cJSON *Str_Json;
