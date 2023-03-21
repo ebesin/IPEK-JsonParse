@@ -115,6 +115,18 @@ void SendFullStop(void)
   CanTMsg.DataLength = 8;
   CanTMsg.Data.c[7] = 1;
   CanSendMsg(&CanTMsg);
+
+  CanTMsg.MsgID = 996;
+  CanTMsg.DataLength = 3;
+  CanTMsg.Data.c[0] = 0;
+  CanTMsg.Data.c[1] = 0x13;
+  CanTMsg.Data.c[2] = 1;
+  CanSendMsg(&CanTMsg);
+
+  CanTMsg.MsgID = 2116;
+  CanTMsg.DataLength = 8;
+  CanTMsg.Data.c[7] = 0;
+  CanSendMsg(&CanTMsg);
 }
 //=============================================================================
 void SendReelFunctionCodeEvent(SCHAR scMode)
