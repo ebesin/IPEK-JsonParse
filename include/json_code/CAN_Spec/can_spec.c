@@ -35,14 +35,15 @@ uint8_t CanSendMsg(CantxMsg *txMessage)
   {
     TxMessage.ExtId = txMessage->MsgID;
     TxMessage.StdId = 0;
+    TxMessage.IDE = CAN_ID_EXT;
   }
   else
   {
     TxMessage.ExtId = 0;
     TxMessage.StdId = txMessage->MsgID;
+    TxMessage.IDE = CAN_ID_STD;
   }
 
-  TxMessage.IDE = CAN_ID_STD;
   TxMessage.RTR = CAN_RTR_DATA;
   TxMessage.DLC = txMessage->DataLength;
 
@@ -98,26 +99,26 @@ void SendClutchOpen(CHAR cOnOff)
 //=============================================================================
 void SendFastFocusEvent(SCHAR scV1)
 {
-  CanTMsg.MsgID      = CMSG_FOCUSSPEED_CTRLINT;//0x154=340
-  CanTMsg.DataLength = 1;   
-  CanTMsg.Data.c[0]  = scV1; 
-  CanSendMsg( &CanTMsg );                                         
+  CanTMsg.MsgID = CMSG_FOCUSSPEED_CTRLINT; // 0x154=340
+  CanTMsg.DataLength = 1;
+  CanTMsg.Data.c[0] = scV1;
+  CanSendMsg(&CanTMsg);
 }
 //=============================================================================
 void SendFullStop(void)
 {
-  CanTMsg.MsgID      = 2116;
+  CanTMsg.MsgID = 2116;
   CanTMsg.DataLength = 8;
-  CanTMsg.Data.c[7]  = 1;
-  CanSendMsg( &CanTMsg );
+  CanTMsg.Data.c[7] = 1;
+  CanSendMsg(&CanTMsg);
 }
 //=============================================================================
 void SendReelFunctionCodeEvent(SCHAR scMode)
 {
-  CanTMsg.MsgID      = CMSG_REELFUNCTIONCODE_CTRLINT;
+  CanTMsg.MsgID = CMSG_REELFUNCTIONCODE_CTRLINT;
   CanTMsg.DataLength = 1;
-  CanTMsg.Data.c[0]  = scMode;
-  CanSendMsg( &CanTMsg );
+  CanTMsg.Data.c[0] = scMode;
+  CanSendMsg(&CanTMsg);
 }
 //=============================================================================
 void SendautoAngleMainLightsValueInDegrees(SCHAR scV1)

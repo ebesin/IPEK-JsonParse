@@ -1268,6 +1268,118 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	cJSON_free(TCPSendBuff);
 }
 
+
+/**
+ * @description  : CMSG_METERCNT1VALUE编码
+ * @return        {*}
+ */
+void CMSG_ROVVERPRESSURE_CODE(void)
+{
+	cJSON *cjson_can = NULL;
+	cJSON *cjson_header = NULL;
+	cJSON *cjson_payload = NULL;
+	char *TCPSendBuff = NULL;
+	DataTouInt16_t datatoint16_t;
+	char cPressureState;
+	for (uint8_t i = 0; i < 2; i++)
+	{
+		datatoint16_t.data[i] = RxMessage.Data[i];
+	}
+ 
+	cPressureState = RxMessage.Data[2];
+
+	cjson_can = cJSON_CreateObject();
+
+	cjson_header = cJSON_CreateObject();
+	cJSON_AddStringToObject(cjson_header, "messageName", "UPDATE_VALUE");
+	cJSON_AddStringToObject(cjson_header, "messageType", "IPEK_CHINA_GUI");
+	cJSON_AddItemToObject(cjson_can, "header", cjson_header);
+
+	cjson_payload = cJSON_CreateObject();
+
+	if(cPressureState == 00)
+	cJSON_AddStringToObject(cjson_payload, "value", "ok");
+	else if ((cPressureState == 04)||(cPressureState == 06))
+	{
+		cJSON_AddStringToObject(cjson_payload, "value", "warning");
+	}
+	else
+	cJSON_AddStringToObject(cjson_payload, "value", "critical");
+
+	cJSON_AddStringToObject(cjson_payload, "what", "pressureStatus");
+	cJSON_AddItemToObject(cjson_can, "payload", cjson_payload);
+
+	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
+	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+	char *enter = "\n\0";
+	strncat(TCPSendBuff, enter, 2);
+	CAN_Cnt = strlen(TCPSendBuff);
+#if DEBUG
+	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
+
+	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+#endif
+	/*-----------------
+	-------------------
+	-------------------发送函数请放这（发送TCPSendBuff）
+													-------------------
+													-------------------
+													-----------------*/
+	sendToApp(TCPSendBuff);
+	cJSON_Delete(cjson_can); // 释放内存
+	cJSON_free(TCPSendBuff);
+}
+
+
+/**
+ * @description  : CMSG_METERCNT1VALUE编码
+ * @return        {*}
+ */
+void CMSG_ROVVERTEMP_CODE(void)
+{
+	cJSON *cjson_can = NULL;
+	cJSON *cjson_header = NULL;
+	cJSON *cjson_payload = NULL;
+	char *TCPSendBuff = NULL;
+	char scTemp;
+
+	scTemp = RxMessage.Data[0];
+
+	cjson_can = cJSON_CreateObject();
+
+	cjson_header = cJSON_CreateObject();
+	cJSON_AddStringToObject(cjson_header, "messageName", "UPDATE_VALUE");
+	cJSON_AddStringToObject(cjson_header, "messageType", "IPEK_CHINA_GUI");
+	cJSON_AddItemToObject(cjson_can, "header", cjson_header);
+
+	cjson_payload = cJSON_CreateObject();
+
+	cJSON_AddNumberToObject(cjson_payload, "value", scTemp);
+
+	cJSON_AddStringToObject(cjson_payload, "what", "temperatureInCelsius");
+	cJSON_AddItemToObject(cjson_can, "payload", cjson_payload);
+
+	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
+	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+	char *enter = "\n\0";
+	strncat(TCPSendBuff, enter, 2);
+	CAN_Cnt = strlen(TCPSendBuff);
+#if DEBUG
+	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
+
+	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+#endif
+	/*-----------------
+	-------------------
+	-------------------发送函数请放这（发送TCPSendBuff）
+													-------------------
+													-------------------
+													-----------------*/
+	sendToApp(TCPSendBuff);
+	cJSON_Delete(cjson_can); // 释放内存
+	cJSON_free(TCPSendBuff);
+}
+
 /**
  * @description  : CAN→TCP 		使用void Scheduler_Code(void)		此函数在can.c中的void CAN_RX_IRQHandler(void)接收中断调用，
  *								添加新的编码需要根据CANID添加case和相应的编码函数
@@ -1290,21 +1402,33 @@ void Scheduler_Code(uint8_t *CANToWiFiRecBuff)
 	MESSAGEID++;
 	switch (CANID)
 	{
-	case CMSG_METERCNT1VALUE:
-	{
-		CMSG_METERCNT1VALUE_CODE();
+		case CMSG_METERCNT1VALUE:
+		{
+			CMSG_METERCNT1VALUE_CODE();
 
-		break;
-	}
-	default:
-	{
+			break;
+		}
+		case CMSG_ROVVERPRESSURE:
+		{
+			CMSG_ROVVERPRESSURE_CODE();
 
-#if DEBUG
-		printf("CAN指令错误\r\n");
-#endif
-		MESSAGEID--;
-		break;
-	}
+			break;
+		}
+		case CMSG_ROVVERTEMP:
+		{
+			CMSG_ROVVERTEMP_CODE();
+
+			break;
+		}
+		default:
+		{
+
+	#if DEBUG
+			//printf("CAN指令错误\r\n");
+	#endif
+			MESSAGEID--;
+			break;
+		}
 	}
 
 	//			USART3_DMA_TxConfig((u32*)UDPSendBuff,CAN_Cnt);
