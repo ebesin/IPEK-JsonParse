@@ -12,7 +12,6 @@
 #define __C_DEFINED_H
 #include <stdint.h>
 
-
 #define MY_TCP_PORT 10086   // 本地tcp端口号
 #define DEST_TCP_PORT 8095  // 目标tcp端口号
 #define MY_UDP_PORT 10010   // 本地udp端口号
@@ -28,7 +27,6 @@
 // #define MY_HOST "192.168.1.146"     // 本地ip
 // #define DEST_UDP_IP "192.168.1.145" // udp目标ip
 // #define DEST_TCP_IP "192.168.1.145" // tcp目标ip
-
 
 #define DEBUG 0
 

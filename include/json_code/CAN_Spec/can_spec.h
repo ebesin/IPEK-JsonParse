@@ -842,4 +842,8 @@ extern void SendReelPower(SCHAR scValue);
 extern void SendReelSpeed(SCHAR scValue);
 extern void SendReelFunctionCodeEvent(SCHAR scMode);
 extern void SendCameraJoystickEvent(SCHAR scV1, SCHAR scV2);
+extern void SendCameraHomePositionEvent(void);
+extern void SendCameraZoomEvent(SCHAR scV);
+extern void SendCrawlerSpeedValue(SCHAR scV1, SCHAR scV2, UCHAR ucMode);
+extern void SendFullStop(void);
 #endif
