@@ -297,6 +297,24 @@ static void highBeamMainLightsValueInPercent_ENCODE(cJSON *STR_Payload) // 主�
 }
 
 /**
+ * @description  : 主灯控制（前后主灯）
+ * @param         {cJSON*} STR_Payload:"payload":{"value":26,"what":"highBeamMainLightsValueInPercent"}
+ *				  what: 自定义组件名称
+ *				  value: 主灯灯光强度值，强度值范围0% - 100%
+ * @return        {*}
+ */
+static void lowBeamMainLightsValueInPercent_ENCODE(cJSON *STR_Payload) // 主灯控制（前后主灯）
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	str_payload_value = (str_payload_value < 0) ? 0 : (str_payload_value > 100) ? 100
+																				: str_payload_value;
+	SendlowBeamMainLightsEvent(str_payload_value);
+#if DEBUG
+	printf("lowBeamMainLightsValueInPercent_ENCODE\r\n");
+#endif
+}
+/**
  * @description  : 自动灯光切换按钮
  * @param         {cJSON*} STR_Payload:"payload":{"value":26,"what":"highBeamMainLightsValueInPercent"}
  *				  what: 自定义组件名称
@@ -455,6 +473,85 @@ static void cruiseControlValue_ENCODE(cJSON *STR_Payload) // 设置定速巡航�
 #endif
 }
 
+/**
+ * @description  : 手动模式自动模式切换按钮
+ * @param         {cJSON*} STR_Payload:"payload":{"value":"manual","what":"cableReelType"}
+ *				  what: 自定义组件名称
+ *				  value: automatic为自动模式，manual为手动模式
+ * @return        {*}
+ */
+static void focusType_ENCODE(cJSON *STR_Payload) // 手动模式自动模式切换按钮
+{
+
+	char *str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valuestring;
+	if (strcmp(str_payload_value, "manual") == 0) // 
+	SetManualFocus();
+	else
+	SetAutoFocus();
+#if DEBUG
+	printf("focusType_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 开启/关闭定速巡航
+ * @param         {cJSON*} STR_Payload:"payload":{"value":true,"what":"cruiseControlStatus"}
+ *				  what: 自定义组件名称
+ *				  value: true为开启定速巡航，false为关闭定速巡航（操作小车Joystick会自动发送取消定速巡航指令）
+ * @return        {*}
+ */
+static void clutchEnabled_ENCODE(cJSON *STR_Payload) // 开启/关闭定速巡航
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	if (str_payload_value) // 
+	SendClutchOpen(0xff);
+	else
+	SendClutch(0);
+#if DEBUG
+	printf("clutchEnabled_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 前置摄像头切换为后置摄像头
+ * @param         {cJSON*} STR_Payload:"payload":{"value":"manual","what":"cableReelType"}
+ *				  what: 自定义组件名称
+ *				  value: automatic为自动模式，manual为手动模式
+ * @return        {*}
+ */
+static void cameraChosen_ENCODE(cJSON *STR_Payload) // 前置摄像头切换为后置摄像头
+{
+
+	char *str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valuestring;
+	if (strcmp(str_payload_value, "front") == 0) // 
+	SendBackViewCameraSwitchEvent(0);
+	else
+	SendBackViewCameraSwitchEvent(1);
+#if DEBUG
+	printf("cameraChosen_ENCODE\r\n");
+#endif
+}
+
+
+/**
+ * @description  : 切换第二个后置摄像头
+ * @param         {cJSON*} STR_Payload:"payload":{"value":true,"what":"cruiseControlStatus"}
+ *				  what: 自定义组件名称
+ *				  value: true为开启定速巡航，false为关闭定速巡航（操作小车Joystick会自动发送取消定速巡航指令）
+ * @return        {*}
+ */
+static void rearCameraIdx_ENCODE(cJSON *STR_Payload) // 切换第二个后置摄像头
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	SendBackViewCameraSwitchEvent(str_payload_value);
+#if DEBUG
+	printf("clutchEnabled_ENCODE\r\n");
+#endif
+}
+
+
 #define UpdateValueCOMMAND_NUM (sizeof(Update_Value_tasks) / sizeof(JsonDecode_task_t))
 /**
  * @description  : 结构体数组，同属Update中的二级子指令，根据what值做二级判断
@@ -470,6 +567,7 @@ static JsonDecode_task_t Update_Value_tasks[] = // 从上往下代表优先级
 		{laserIntensity_ENCODE, "laserIntensity"},		   								// 激光控制
 		{localizerFrequency_ENCODE, "localizerFrequency"}, 								// 左侧定位功能
 		{highBeamMainLightsValueInPercent_ENCODE, "highBeamMainLightsValueInPercent"}, 	// 主灯控制（前后主灯）
+		{lowBeamMainLightsValueInPercent_ENCODE, "lowBeamMainLightsValueInPercent"}, 	// 近光灯调节		
 		{autoAngleMainLightsStatus_ENCODE, "autoAngleMainLightsStatus"}, 				// 自动灯光切换按钮
 		{autoAngleMainLightsValueInDegrees_ENCODE, "autoAngleMainLightsValueInDegrees"},// 近光灯控制
 		{cableReelPower_ENCODE, "cableReelPower"},										// 自动模式，线缆盘张力控制
@@ -477,9 +575,10 @@ static JsonDecode_task_t Update_Value_tasks[] = // 从上往下代表优先级
 		{cableReelType_ENCODE, "cableReelType"},										// 手动模式自动模式切换按钮
 		{cruiseControlStatus_ENCODE, "cruiseControlStatus"},							// 开启/关闭定速巡航
 		{cruiseControlValue_ENCODE, "cruiseControlValue"},								// 设置定速巡航速度值
-
-
-
+		{focusType_ENCODE, "focusType"},												// 切换手动模式和自动模式
+		{clutchEnabled_ENCODE, "clutchEnabled"},										// 右侧离合器开关
+		{cameraChosen_ENCODE, "cameraChosen"},											// 前置摄像头切换为后置摄像头
+		{rearCameraIdx_ENCODE, "rearCameraIdx"},										// 切换第二个后置摄像头
 };
 
 /**
@@ -530,18 +629,18 @@ static void camera_reset_ENCODE(cJSON *STR_Payload) // 'reset' 摄像头恢复�
 
 
 /**
- * @description  : 结构体数组，同属what中的二级子指令，根据what值做二级判断
+ * @description  : 结构体数组，同属action中的二级子指令，根据action值做三级级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
  *				 messageName[30]：指令名称
  *
  */
-static JsonDecode_task_t action_tasks[] = // 从上往下代表优先级
+static JsonDecode_task_t camera_tasks[] = // 从上往下代表优先级
 {
 		{camera_reset_ENCODE, "reset"},											// 摄像头恢复正常
 
 
 };
-#define actionCOMMAND_NUM (sizeof(action_tasks) / sizeof(JsonDecode_task_t))
+#define cameraCOMMAND_NUM (sizeof(camera_tasks) / sizeof(JsonDecode_task_t))
 /**
  * @description  : what解析，三级判断
  * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
@@ -553,18 +652,18 @@ static void camera_ENCODE(cJSON *STR_Payload) // action
 	if (!str_Payload_action)
 		return;	
 	
-	for (uint8_t index = 0; index < UpdateValueCOMMAND_NUM; index++)
+	for (uint8_t index = 0; index < cameraCOMMAND_NUM; index++)
 	{
-		if (strcmp(str_Payload_action, action_tasks[index].messageName) == 0) // 找到对应指令
+		if (strcmp(str_Payload_action, camera_tasks[index].messageName) == 0) // 找到对应指令
 		{
 			// 执行线程函数，使用的是函数指针
-			action_tasks[index].decode_func(STR_Payload);
+			camera_tasks[index].decode_func(STR_Payload);
 			break;
 		}
-		if (index == actionCOMMAND_NUM - 1)
+		if (index == cameraCOMMAND_NUM - 1)
 		{
 #if DEBUG
-			printf("ACTION指令错误\r\n");
+			printf("camera指令错误\r\n");
 #endif
 		}
 	}
@@ -574,6 +673,345 @@ static void camera_ENCODE(cJSON *STR_Payload) // action
 #endif
 }
 
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void zoom_incrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendCameraZoomEvent(-100);
+#if DEBUG
+	printf("zoom_incrementing_started_ENCODE\r\n");
+#endif
+}
+
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void zoom_incrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendCameraZoomEvent(0);
+#if DEBUG
+	printf("zoom_incrementing_ended_ENCODE\r\n");
+#endif
+}
+
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void zoom_decrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendCameraZoomEvent(100);
+#if DEBUG
+	printf("zoom_decrementing_started_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void zoom_decrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendCameraZoomEvent(0);
+#if DEBUG
+	printf("zoom_decrementing_ended_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 结构体数组，同属action中的二级子指令，根据action值做三级级判断
+ * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
+ *				 messageName[30]：指令名称
+ *
+ */
+static JsonDecode_task_t zoom_tasks[] = // 从上往下代表优先级
+{
+		{zoom_incrementing_started_ENCODE, "incrementing_started"},											// 摄像头恢复正常
+		{zoom_incrementing_ended_ENCODE, "incrementing_ended"},		
+		{zoom_decrementing_started_ENCODE, "decrementing_started"},		
+		{zoom_decrementing_ended_ENCODE, "decrementing_ended"},		
+};
+#define zoomCOMMAND_NUM (sizeof(zoom_tasks) / sizeof(JsonDecode_task_t))
+/**
+ * @description  : what解析，三级判断
+ * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
+ * @return        {*}
+ */
+static void zoom_ENCODE(cJSON *STR_Payload) // action
+{
+	char *str_Payload_action = cJSON_GetObjectItem(STR_Payload, "action")->valuestring;
+	if (!str_Payload_action)
+		return;	
+	
+	for (uint8_t index = 0; index < zoomCOMMAND_NUM; index++)
+	{
+		if (strcmp(str_Payload_action, zoom_tasks[index].messageName) == 0) // 找到对应指令
+		{
+			// 执行线程函数，使用的是函数指针
+			zoom_tasks[index].decode_func(STR_Payload);
+			break;
+		}
+		if (index == zoomCOMMAND_NUM - 1)
+		{
+#if DEBUG
+			printf("zoom指令错误\r\n");
+#endif
+		}
+	}
+
+#if DEBUG
+	printf("zoom_ENCODE\r\n");
+#endif
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void focus_incrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SetManualFocus();
+	SendFastFocusEvent(100);
+#if DEBUG
+	printf("focus_incrementing_started_ENCODE\r\n");
+#endif
+}
+
+
+/**
+ * @description  : 松手increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void focus_incrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendFastFocusEvent(0);
+#if DEBUG
+	printf("focus_incrementing_ended_ENCODE\r\n");
+#endif
+}
+
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void focus_decrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SetManualFocus();
+	SendFastFocusEvent(-100);
+#if DEBUG
+	printf("focus_decrementing_started_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void focus_decrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendFastFocusEvent(0);
+#if DEBUG
+	printf("focus_decrementing_ended_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 结构体数组，同属action中的二级子指令，根据action值做三级级判断
+ * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
+ *				 messageName[30]：指令名称
+ *
+ */
+static JsonDecode_task_t focus_tasks[] = // 从上往下代表优先级
+{
+		{focus_incrementing_started_ENCODE, "incrementing_started"},											// 摄像头恢复正常
+		{focus_incrementing_ended_ENCODE, "incrementing_ended"},		
+		{focus_decrementing_started_ENCODE, "decrementing_started"},		
+		{focus_decrementing_ended_ENCODE, "decrementing_ended"},		
+};
+#define focusCOMMAND_NUM (sizeof(focus_tasks) / sizeof(JsonDecode_task_t))
+/**
+ * @description  : what解析，三级判断
+ * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
+ * @return        {*}
+ */
+static void focus_ENCODE(cJSON *STR_Payload) // action
+{
+	char *str_Payload_action = cJSON_GetObjectItem(STR_Payload, "action")->valuestring;
+	if (!str_Payload_action)
+		return;	
+	
+	for (uint8_t index = 0; index < focusCOMMAND_NUM; index++)
+	{
+		if (strcmp(str_Payload_action, focus_tasks[index].messageName) == 0) // 找到对应指令
+		{
+			// 执行线程函数，使用的是函数指针
+			focus_tasks[index].decode_func(STR_Payload);
+			break;
+		}
+		if (index == focusCOMMAND_NUM - 1)
+		{
+#if DEBUG
+			printf("focus指令错误\r\n");
+#endif
+		}
+	}
+
+#if DEBUG
+	printf("focus_ENCODE\r\n");
+#endif
+}
+
+
+
+
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void elevator_incrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendLiftSpeedValue(100);
+#if DEBUG
+	printf("elevator_incrementing_started_ENCODE\r\n");
+#endif
+}
+
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void elevator_incrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendLiftSpeedValue(0);
+#if DEBUG
+	printf("elevator_incrementing_ended_ENCODE\r\n");
+#endif
+}
+
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void elevator_decrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendLiftSpeedValue(-100);
+#if DEBUG
+	printf("elevator_decrementing_started_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 按下increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ *				  what: 自定义组件名称
+ * @return        {*}
+ */
+static void elevator_decrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+{
+	SendLiftSpeedValue(0);
+#if DEBUG
+	printf("elevator_decrementing_ended_ENCODE\r\n");
+#endif
+}
+
+/**
+ * @description  : 结构体数组，同属action中的二级子指令，根据action值做三级级判断
+ * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
+ *				 messageName[30]：指令名称
+ *
+ */
+static JsonDecode_task_t elevator_tasks[] = // 从上往下代表优先级
+{
+		{elevator_incrementing_started_ENCODE, "incrementing_started"},											// 摄像头恢复正常
+		{elevator_incrementing_ended_ENCODE, "incrementing_ended"},		
+		{elevator_decrementing_started_ENCODE, "decrementing_started"},		
+		{elevator_decrementing_ended_ENCODE, "decrementing_ended"},		
+};
+#define elevatorCOMMAND_NUM (sizeof(elevator_tasks) / sizeof(JsonDecode_task_t))
+/**
+ * @description  : what解析，三级判断
+ * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
+ * @return        {*}
+ */
+static void elevator_ENCODE(cJSON *STR_Payload) // action
+{
+	char *str_Payload_action = cJSON_GetObjectItem(STR_Payload, "action")->valuestring;
+	if (!str_Payload_action)
+		return;	
+	
+	for (uint8_t index = 0; index < elevatorCOMMAND_NUM; index++)
+	{
+		if (strcmp(str_Payload_action, elevator_tasks[index].messageName) == 0) // 找到对应指令
+		{
+			// 执行线程函数，使用的是函数指针
+			elevator_tasks[index].decode_func(STR_Payload);
+			break;
+		}
+		if (index == elevatorCOMMAND_NUM - 1)
+		{
+#if DEBUG
+			printf("elevator指令错误\r\n");
+#endif
+		}
+	}
+
+#if DEBUG
+	printf("elevator_ENCODE\r\n");
+#endif
+}
 
 
 /**
@@ -585,8 +1023,9 @@ static void camera_ENCODE(cJSON *STR_Payload) // action
 static JsonDecode_task_t Action_tasks[] = // 从上往下代表优先级
 {
 		{camera_ENCODE, "camera"},											// 摄像头恢复正常
-
-
+		{zoom_ENCODE, "zoom"},												// 左侧camera zoom
+		{focus_ENCODE, "focus"},											// 左侧camera focus
+		{elevator_ENCODE, "elevator"},										// 右侧升降架高度调节	
 };
 #define ActionCOMMAND_NUM (sizeof(Action_tasks) / sizeof(JsonDecode_task_t))
 
@@ -622,21 +1061,6 @@ static void ACTION_ENCODE(cJSON *STR_Payload) // action
 #endif
 }
 
-/**
- * @description  : 'reset' 摄像头恢复正常
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action: 'reset' 摄像头恢复正常
- *				  what: 自定义组件名称
- * @return        {*}
- */
-static void CHANGE_OBJECT_VALUE_RESP_ENCODE(cJSON *STR_Payload) // 'reset' 摄像头恢复正常
-{
-	SendCameraZoomEvent(100);
-#if DEBUG
-	printf("CHANGE_OBJECT_VALUE_RESP_ENCODE\r\n");
-#endif
-}
-
 
 /**
  * @description  : 'reset' 摄像头恢复正常
@@ -665,7 +1089,6 @@ JsonDecode_task_t JsonDecode_tasks[] = // 从上往下代表优先级
 		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"}, 					 // Full stop		
 		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},						 // UPDATE_VALUE
 		{ACTION_ENCODE, "ACTION"},						 		 	 // ACTION
-		{CHANGE_OBJECT_VALUE_RESP_ENCODE, "CHANGE_OBJECT_VALUE_RESP"},// ACTION
 };
 
 #define COMMAND_NUM (sizeof(JsonDecode_tasks) / sizeof(JsonDecode_task_t))
