@@ -500,7 +500,7 @@ static void focusType_ENCODE(cJSON *STR_Payload) // 手动模式自动模式切�
  *				  value: true为开启定速巡航，false为关闭定速巡航（操作小车Joystick会自动发送取消定速巡航指令）
  * @return        {*}
  */
-static void clutchEnabled_ENCODE(cJSON *STR_Payload) // 开启/关闭定速巡航
+static void clutchStatus_ENCODE(cJSON *STR_Payload) // 开启/关闭定速巡航
 {
 
 	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
@@ -509,7 +509,7 @@ static void clutchEnabled_ENCODE(cJSON *STR_Payload) // 开启/关闭定速巡�
 	else
 	SendClutch(0);
 #if DEBUG
-	printf("clutchEnabled_ENCODE\r\n");
+	printf("clutchStatus_ENCODE\r\n");
 #endif
 }
 
@@ -576,7 +576,7 @@ static JsonDecode_task_t Update_Value_tasks[] = // 从上往下代表优先级
 		{cruiseControlStatus_ENCODE, "cruiseControlStatus"},							// 开启/关闭定速巡航
 		{cruiseControlValue_ENCODE, "cruiseControlValue"},								// 设置定速巡航速度值
 		{focusType_ENCODE, "focusType"},												// 切换手动模式和自动模式
-		{clutchEnabled_ENCODE, "clutchEnabled"},										// 右侧离合器开关
+		{clutchStatus_ENCODE, "clutchStatus"},										// 右侧离合器开关
 		{cameraChosen_ENCODE, "cameraChosen"},											// 前置摄像头切换为后置摄像头
 		{rearCameraIdx_ENCODE, "rearCameraIdx"},										// 切换第二个后置摄像头
 };
@@ -1297,6 +1297,7 @@ void CMSG_ROVVERPRESSURE_CODE(void)
 
 	cjson_payload = cJSON_CreateObject();
 
+	cJSON_AddStringToObject(cjson_payload, "what", "pressureStatus");
 	if(cPressureState == 00)
 	cJSON_AddStringToObject(cjson_payload, "value", "ok");
 	else if ((cPressureState == 04)||(cPressureState == 06))
@@ -1306,7 +1307,7 @@ void CMSG_ROVVERPRESSURE_CODE(void)
 	else
 	cJSON_AddStringToObject(cjson_payload, "value", "critical");
 
-	cJSON_AddStringToObject(cjson_payload, "what", "pressureStatus");
+
 	cJSON_AddItemToObject(cjson_can, "payload", cjson_payload);
 
 	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
@@ -1325,10 +1326,103 @@ void CMSG_ROVVERPRESSURE_CODE(void)
 													-------------------
 													-------------------
 													-----------------*/
+
 	sendToApp(TCPSendBuff);
+
+	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("pressureInHpa"));
+	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatoint16_t.value));	
+
+	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
+	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+	strncat(TCPSendBuff, enter, 2);
+	CAN_Cnt = strlen(TCPSendBuff);
+	sendToApp(TCPSendBuff);	
+#if DEBUG
+	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
+
+	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+#endif
+
 	cJSON_Delete(cjson_can); // 释放内存
 	cJSON_free(TCPSendBuff);
 }
+
+
+/**
+ * @description  : CMSG_METERCNT1VALUE编码
+ * @return        {*}
+ */
+void CMSG_INCLINATIONXDEG_CODE(void)
+{
+	cJSON *cjson_can = NULL;
+	cJSON *cjson_header = NULL;
+	cJSON *cjson_payload = NULL;
+	char *TCPSendBuff = NULL;
+	DataToFloat datatofloat;
+	char scState;
+	for (uint8_t i = 0; i < 4; i++)
+	{
+		datatofloat.data[i] = RxMessage.Data[i];
+	}
+ 
+	scState = RxMessage.Data[4];
+
+	cjson_can = cJSON_CreateObject();
+
+	cjson_header = cJSON_CreateObject();
+	cJSON_AddStringToObject(cjson_header, "messageName", "UPDATE_VALUE");
+	cJSON_AddStringToObject(cjson_header, "messageType", "IPEK_CHINA_GUI");
+	cJSON_AddItemToObject(cjson_can, "header", cjson_header);
+
+	cjson_payload = cJSON_CreateObject();
+
+	cJSON_AddStringToObject(cjson_payload, "what", "crawlerOver");
+	if(scState == 00)
+	cJSON_AddStringToObject(cjson_payload, "value", "ok");
+	else if ((scState == 01)||(scState == 02))
+	{
+		cJSON_AddStringToObject(cjson_payload, "value", "critical");
+	}
+
+	cJSON_AddItemToObject(cjson_can, "payload", cjson_payload);
+
+	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
+	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+	char *enter = "\n\0";
+	strncat(TCPSendBuff, enter, 2);
+	CAN_Cnt = strlen(TCPSendBuff);
+#if DEBUG
+	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
+
+	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+#endif
+	/*-----------------
+	-------------------
+	-------------------发送函数请放这（发送TCPSendBuff）
+													-------------------
+													-------------------
+													-----------------*/
+
+	sendToApp(TCPSendBuff);
+
+	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("crawlerAngleInDegress"));
+	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatofloat.value));	
+
+	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
+	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+	strncat(TCPSendBuff, enter, 2);
+	CAN_Cnt = strlen(TCPSendBuff);
+	sendToApp(TCPSendBuff);	
+#if DEBUG
+	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
+
+	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+#endif
+
+	cJSON_Delete(cjson_can); // 释放内存
+	cJSON_free(TCPSendBuff);
+}
+
 
 
 /**
@@ -1418,6 +1512,11 @@ void Scheduler_Code(uint8_t *CANToWiFiRecBuff)
 		{
 			CMSG_ROVVERTEMP_CODE();
 
+			break;
+		}
+		case CMSG_INCLINATIONXDEG:
+		{
+			CMSG_INCLINATIONXDEG_CODE();
 			break;
 		}
 		default:
