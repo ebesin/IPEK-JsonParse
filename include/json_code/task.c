@@ -15,9 +15,16 @@
 #include "../common/cJSON.h"
 #include "CAN_Spec/can_spec.h"
 
+/**
+ * @description  : 小车遥感换算函数，0-360
+ * @param         {SCHAR*} scV1:速度scV1
+ * @param         {SCHAR*} scV2:速度scV2
+ * @param         {double} angle:摇杆偏移角度
+ * @param         {double} power:摇杆离开初始点的距离
+ * @return        {*}
+ */
 void RockerConversion_360(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
 {
-	//	angle = (angle<0)?0:(angle>360)?360:angle;
 
 	if ((angle > 0) && (angle < 90))
 	{
@@ -41,11 +48,16 @@ void RockerConversion_360(SCHAR *scV1, SCHAR *scV2, double angle, double power) 
 	}
 }
 
+/**
+ * @description  : 相机遥感换算函数，0-360
+ * @param         {SCHAR*} scV1:速度scV1
+ * @param         {SCHAR*} scV2:速度scV2
+ * @param         {double} angle:摇杆偏移角度
+ * @param         {double} power:摇杆离开初始点的距离
+ * @return        {*}
+ */
 void RockerConversion_180_Camera(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
 {
-	//	angle = (angle<0)?0:(angle>360)?360:angle;]
-	//0-360
-	//270-270+360
 
 	angle -= 90;
 	if(angle<0)
@@ -71,7 +83,14 @@ void RockerConversion_180_Camera(SCHAR *scV1, SCHAR *scV2, double angle, double 
 		*scV2 = (SCHAR)(power *(100/90*angle-300));
 	}
 }
-
+/**
+ * @description  : 相机遥感换算函数，-180-180
+ * @param         {SCHAR*} scV1:速度scV1
+ * @param         {SCHAR*} scV2:速度scV2
+ * @param         {double} angle:摇杆偏移角度
+ * @param         {double} power:摇杆离开初始点的距离
+ * @return        {*}
+ */
 void RockerConversion_180_Camera_Test(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
 {
 	if ((angle >= -45) && (angle < 45))
@@ -95,7 +114,14 @@ void RockerConversion_180_Camera_Test(SCHAR *scV1, SCHAR *scV2, double angle, do
 		*scV2 = (SCHAR)(-power*100);
 	}
 }
-
+/**
+ * @description  : 小车遥感换算函数，-180-180
+ * @param         {SCHAR*} scV1:速度scV1
+ * @param         {SCHAR*} scV2:速度scV2
+ * @param         {double} angle:摇杆偏移角度
+ * @param         {double} power:摇杆离开初始点的距离
+ * @return        {*}
+ */
 void RockerConversion_180_Car(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
 {
 	angle -= 90;
@@ -122,7 +148,14 @@ void RockerConversion_180_Car(SCHAR *scV1, SCHAR *scV2, double angle, double pow
 		*scV2 = (SCHAR)(power * 100);
 	}
 }
-
+/**
+ * @description  : 小车遥感换算函数，-180-180
+ * @param         {SCHAR*} scV1:速度scV1
+ * @param         {SCHAR*} scV2:速度scV2
+ * @param         {double} angle:摇杆偏移角度
+ * @param         {double} power:摇杆离开初始点的距离
+ * @return        {*}
+ */
 void RockerConversion_180_Car_Test(SCHAR *scV1, SCHAR *scV2, double angle, double power) // 遥感换算
 {
 	if ((angle >= -45) && (angle < 45))
@@ -149,13 +182,13 @@ void RockerConversion_180_Car_Test(SCHAR *scV1, SCHAR *scV2, double angle, doubl
 
 /**
  * @description  : 右侧操纵杆（控制小车）
- * @param         {cJSON*} STR_Payload:"payload":{"value":{"angle":57,"power":1},"what":"roverJoystick"}}
+ * @param         {cJSON*} "payload":{"value":{"angle":-98.10724803565803,"power":1},"what":"roverJoystick"}
  *				  angle: 操纵杆转动角度（顺时针角度）
  *  			  what: 自定义组件名称
  * 				  power: 按压力度
  * @return        {*}
  */
-static void roverJoystick_ENCODE(cJSON *STR_Payload) // 摇杆控制车
+static void roverJoystick_ENCODE(cJSON *STR_Payload) // 右侧操纵杆（控制小车）
 {
 	cJSON *str_value = cJSON_GetObjectItem(STR_Payload, "value");
 	double str_payload_angle = cJSON_GetObjectItem(str_value, "angle")->valuedouble;
@@ -190,9 +223,14 @@ void Shutdown_CMD(void)
 {
 	SendPowerOffCMD();
 }
-
-
-static void CHANGE_OBJECT_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 开关机
+/**
+ * @description  : 开关机指令
+ * @param         {cJSON*} "payload":{"object":"powerSwitch","value":true}
+ *				  object: 电源开关
+ *  			  value: 开关状态
+ * @return        {*}
+ */
+static void CHANGE_OBJECT_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 开关机指令
 {
 
 	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
@@ -241,7 +279,7 @@ static void laserIntensity_ENCODE(cJSON *STR_Payload) // 激光控制
  *				  value: dropdown下拉选择值(off/512Hz/640Hz/33kHz)
  * @return        {*}
  */
-static void localizerFrequency_ENCODE(cJSON *STR_Payload) // 激光控制
+static void localizerFrequency_ENCODE(cJSON *STR_Payload) // 左侧定位功能
 {
 
 	char *str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valuestring;
@@ -260,7 +298,7 @@ static void localizerFrequency_ENCODE(cJSON *STR_Payload) // 激光控制
 
 /**
  * @description  : 辅助光源控制（前后辅助光源）
- * @param         {cJSON*} STR_Payload:"payload":{"value":1,"what":"auxiliaryLights"}
+ * @param         {cJSON*} STR_Payload:"payload":{"value":1,"what":"auxiliaryLightsValueInPercent"}
  *				  what: 自定义组件名称
  *				  value: 辅助光源灯光强度值，强度值范围0% - 100%
  * @return        {*}
@@ -297,13 +335,13 @@ static void highBeamMainLightsValueInPercent_ENCODE(cJSON *STR_Payload) // 主�
 }
 
 /**
- * @description  : 主灯控制（前后主灯）
- * @param         {cJSON*} STR_Payload:"payload":{"value":26,"what":"highBeamMainLightsValueInPercent"}
+ * @description  : 自动灯光按钮关闭，调节近光灯调节
+ * @param         {cJSON*} STR_Payload:"payload":{"value":77,"what":"lowBeamMainLightsValueInPercent"}
  *				  what: 自定义组件名称
- *				  value: 主灯灯光强度值，强度值范围0% - 100%
+ *				  value: 灯光强度调节范围0% - 100%
  * @return        {*}
  */
-static void lowBeamMainLightsValueInPercent_ENCODE(cJSON *STR_Payload) // 主灯控制（前后主灯）
+static void lowBeamMainLightsValueInPercent_ENCODE(cJSON *STR_Payload) // 自动灯光按钮关闭，调节近光灯调节
 {
 
 	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
@@ -315,13 +353,13 @@ static void lowBeamMainLightsValueInPercent_ENCODE(cJSON *STR_Payload) // 主灯
 #endif
 }
 /**
- * @description  : 自动灯光切换按钮
- * @param         {cJSON*} STR_Payload:"payload":{"value":26,"what":"highBeamMainLightsValueInPercent"}
+ * @description  :   自动灯光切换按钮
+ * @param         {cJSON*} STR_Payload:"payload":{"value":26,"what":"autoAngleMainLightsStatus"}
  *				  what: 自定义组件名称
  *				  value: true/false 自动灯光开启和关闭
  * @return        {*}
  */
-static void autoAngleMainLightsStatus_ENCODE(cJSON *STR_Payload) // 自动灯光切换按钮
+static void autoAngleMainLightsStatus_ENCODE(cJSON *STR_Payload) //   自动灯光切换按钮
 {
 
 	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
@@ -372,7 +410,7 @@ static void cableReelPower_ENCODE(cJSON *STR_Payload) // 自动模式，线缆�
 
 /**
  * @description  : 手动模式，线缆盘速度控制
- * @param         {cJSON*} STR_Payload:"payload":{"value":1,"what":"cableReelPower"}
+ * @param         {cJSON*} STR_Payload:"payload":{"value":-13,"what":"cableReelSpeed"}
  *				  what: 自定义组件名称
  *				  value: 提升速度指令（发送具体速度值，速度值范围-100% - 100%，待UI更新）
  * @return        {*}
@@ -412,9 +450,9 @@ static void cableReelType_ENCODE(cJSON *STR_Payload) // 手动模式自动模式
 /**
  * @description  : 左侧操纵杆（控制摄像头）
  * @param         {cJSON*} STR_Payload:"payload":{"value":{"angle":-60.945395900922854,"power":0.46330335634441494},"what":"cameraJoystick"}
- *				  angle: 操纵杆转动角度（顺时针角度）
+ *				  angle: 操纵杆转动角度（顺时针角度）-180~180°，浮点型
  *  			  what: 自定义组件名称
- * 				  power: 按压力度
+ * 				  power: 按压力度,0.0001~1，Float型
  * @return        {*}
  */
 static void cameraJoystick_ENCODE(cJSON *STR_Payload) // 左侧操纵杆（控制摄像头）
@@ -457,7 +495,7 @@ static void cruiseControlStatus_ENCODE(cJSON *STR_Payload) // 开启/关闭定�
 
 /**
  * @description  : 设置定速巡航速度值
- * @param         {cJSON*} STR_Payload:"payload":{"value":true,"what":"cruiseControlStatus"}
+ * @param         {cJSON*} STR_Payload:"payload":{"value":36,"what":"cruiseControlValue"}
  *				  what: 自定义组件名称
  *				  value: 设置定速巡航速度值
  * @return        {*}
@@ -475,9 +513,9 @@ static void cruiseControlValue_ENCODE(cJSON *STR_Payload) // 设置定速巡航�
 
 /**
  * @description  : 手动模式自动模式切换按钮
- * @param         {cJSON*} STR_Payload:"payload":{"value":"manual","what":"cableReelType"}
+ * @param         {cJSON*} STR_Payload:"payload":{"value":"manual","what":"focusType"}
  *				  what: 自定义组件名称
- *				  value: automatic为自动模式，manual为手动模式
+ *				  value: auto代表自动模式，manual代表手动模式
  * @return        {*}
  */
 static void focusType_ENCODE(cJSON *STR_Payload) // 手动模式自动模式切换按钮
@@ -494,13 +532,13 @@ static void focusType_ENCODE(cJSON *STR_Payload) // 手动模式自动模式切�
 }
 
 /**
- * @description  : 开启/关闭定速巡航
- * @param         {cJSON*} STR_Payload:"payload":{"value":true,"what":"cruiseControlStatus"}
+ * @description  : 右侧离合器开关
+ * @param         {cJSON*} STR_Payload:"payload":{"value":true,"what":"clutchStatus"}
  *				  what: 自定义组件名称
- *				  value: true为开启定速巡航，false为关闭定速巡航（操作小车Joystick会自动发送取消定速巡航指令）
+ *				  value: 离合器开关(true or false)
  * @return        {*}
  */
-static void clutchStatus_ENCODE(cJSON *STR_Payload) // 开启/关闭定速巡航
+static void clutchStatus_ENCODE(cJSON *STR_Payload) // 右侧离合器开关
 {
 
 	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
@@ -515,9 +553,9 @@ static void clutchStatus_ENCODE(cJSON *STR_Payload) // 开启/关闭定速巡航
 
 /**
  * @description  : 前置摄像头切换为后置摄像头
- * @param         {cJSON*} STR_Payload:"payload":{"value":"manual","what":"cableReelType"}
+ * @param         {cJSON*} STR_Payload:"payload":{"value":"rear","what":"cameraChosen"}
  *				  what: 自定义组件名称
- *				  value: automatic为自动模式，manual为手动模式
+ *				  value: 后置摄像头名称（切换后置摄像头默认开启第一个后置摄像头）
  * @return        {*}
  */
 static void cameraChosen_ENCODE(cJSON *STR_Payload) // 前置摄像头切换为后置摄像头
@@ -536,9 +574,9 @@ static void cameraChosen_ENCODE(cJSON *STR_Payload) // 前置摄像头切换为�
 
 /**
  * @description  : 切换第二个后置摄像头
- * @param         {cJSON*} STR_Payload:"payload":{"value":true,"what":"cruiseControlStatus"}
+ * @param         {cJSON*} STR_Payload:"payload":{"value":2,"what":"rearCameraIdx"}
  *				  what: 自定义组件名称
- *				  value: true为开启定速巡航，false为关闭定速巡航（操作小车Joystick会自动发送取消定速巡航指令）
+ *				  value: 第二个后置摄像头
  * @return        {*}
  */
 static void rearCameraIdx_ENCODE(cJSON *STR_Payload) // 切换第二个后置摄像头
@@ -576,7 +614,7 @@ static JsonDecode_task_t Update_Value_tasks[] = // 从上往下代表优先级
 		{cruiseControlStatus_ENCODE, "cruiseControlStatus"},							// 开启/关闭定速巡航
 		{cruiseControlValue_ENCODE, "cruiseControlValue"},								// 设置定速巡航速度值
 		{focusType_ENCODE, "focusType"},												// 切换手动模式和自动模式
-		{clutchStatus_ENCODE, "clutchStatus"},										// 右侧离合器开关
+		{clutchStatus_ENCODE, "clutchStatus"},											// 右侧离合器开关
 		{cameraChosen_ENCODE, "cameraChosen"},											// 前置摄像头切换为后置摄像头
 		{rearCameraIdx_ENCODE, "rearCameraIdx"},										// 切换第二个后置摄像头
 };
@@ -629,7 +667,7 @@ static void camera_reset_ENCODE(cJSON *STR_Payload) // 'reset' 摄像头恢复�
 
 
 /**
- * @description  : 结构体数组，同属action中的二级子指令，根据action值做三级级判断
+ * @description  : 结构体数组，同属action中的三级子指令，根据action值做三级级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
  *				 messageName[30]：指令名称
  *
@@ -642,7 +680,7 @@ static JsonDecode_task_t camera_tasks[] = // 从上往下代表优先级
 };
 #define cameraCOMMAND_NUM (sizeof(camera_tasks) / sizeof(JsonDecode_task_t))
 /**
- * @description  : what解析，三级判断
+ * @description  : action解析，三级判断
  * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
  * @return        {*}
  */
@@ -676,12 +714,12 @@ static void camera_ENCODE(cJSON *STR_Payload) // action
 
 /**
  * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"incrementing_started","what":"zoom"}
  *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void zoom_incrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void zoom_incrementing_started_ENCODE(cJSON *STR_Payload) //  按下increment按钮发送指令
 {
 	SendCameraZoomEvent(-100);
 #if DEBUG
@@ -691,13 +729,13 @@ static void zoom_incrementing_started_ENCODE(cJSON *STR_Payload) //  incrementin
 
 
 /**
- * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ * @description  : 松开increment按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"incrementing_ended","what":"zoom"}
+ *				  action:  incrementing_ended 组件设置的值
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void zoom_incrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void zoom_incrementing_ended_ENCODE(cJSON *STR_Payload) //  松开increment按钮发送指令
 {
 	SendCameraZoomEvent(0);
 #if DEBUG
@@ -707,13 +745,13 @@ static void zoom_incrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_
 
 
 /**
- * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ * @description  : 按下decrementing按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"decrementing_started","what":"zoom"}
+ *				  action:  decrementing_started 组件设置的值（数值可以调整，待确定）
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void zoom_decrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void zoom_decrementing_started_ENCODE(cJSON *STR_Payload) //  按下decrementing按钮发送指令
 {
 	SendCameraZoomEvent(100);
 #if DEBUG
@@ -722,13 +760,13 @@ static void zoom_decrementing_started_ENCODE(cJSON *STR_Payload) //  incrementin
 }
 
 /**
- * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ * @description  : 松开decrementing按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"decrementing_ended","what":"zoom"}
  *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void zoom_decrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void zoom_decrementing_ended_ENCODE(cJSON *STR_Payload) //  松开decrementing按钮发送指令
 {
 	SendCameraZoomEvent(0);
 #if DEBUG
@@ -737,7 +775,7 @@ static void zoom_decrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_
 }
 
 /**
- * @description  : 结构体数组，同属action中的二级子指令，根据action值做三级级判断
+ * @description  : 结构体数组，同属zoom中的三级子指令，根据action值做三级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
  *				 messageName[30]：指令名称
  *
@@ -751,7 +789,7 @@ static JsonDecode_task_t zoom_tasks[] = // 从上往下代表优先级
 };
 #define zoomCOMMAND_NUM (sizeof(zoom_tasks) / sizeof(JsonDecode_task_t))
 /**
- * @description  : what解析，三级判断
+ * @description  : action解析，三级判断
  * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
  * @return        {*}
  */
@@ -793,12 +831,12 @@ static void zoom_ENCODE(cJSON *STR_Payload) // action
 
 /**
  * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"incrementing_started","what":"focus"}
+ *				  action:  固定参数incrementing_started
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void focus_incrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void focus_incrementing_started_ENCODE(cJSON *STR_Payload) //  按下increment按钮发送指令
 {
 	SetManualFocus();
 	SendFastFocusEvent(100);
@@ -810,12 +848,12 @@ static void focus_incrementing_started_ENCODE(cJSON *STR_Payload) //  incrementi
 
 /**
  * @description  : 松手increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"incrementing_ended","what":"focus"}
+ *				  action:  固定参数incrementing_ended
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void focus_incrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void focus_incrementing_ended_ENCODE(cJSON *STR_Payload) //  松手increment按钮发送指令
 {
 	SendFastFocusEvent(0);
 #if DEBUG
@@ -825,13 +863,13 @@ static void focus_incrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing
 
 
 /**
- * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ * @description  : 按下decrement按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"decrementing_started","what":"focus"}
+ *				  action:  固定参数decrementing_started
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void focus_decrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void focus_decrementing_started_ENCODE(cJSON *STR_Payload) //  按下decrement按钮发送指令
 {
 	SetManualFocus();
 	SendFastFocusEvent(-100);
@@ -841,13 +879,13 @@ static void focus_decrementing_started_ENCODE(cJSON *STR_Payload) //  incrementi
 }
 
 /**
- * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ * @description  : 松开decrement按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"decrementing_started","what":"focus"}
+ *				  action:  固定参数decrementing_started
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void focus_decrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void focus_decrementing_ended_ENCODE(cJSON *STR_Payload) //  松开decrement按钮发送指令
 {
 	SendFastFocusEvent(0);
 #if DEBUG
@@ -856,7 +894,7 @@ static void focus_decrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing
 }
 
 /**
- * @description  : 结构体数组，同属action中的二级子指令，根据action值做三级级判断
+ * @description  : 结构体数组，同属focus中的三级子指令，根据action值做三级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
  *				 messageName[30]：指令名称
  *
@@ -870,7 +908,7 @@ static JsonDecode_task_t focus_tasks[] = // 从上往下代表优先级
 };
 #define focusCOMMAND_NUM (sizeof(focus_tasks) / sizeof(JsonDecode_task_t))
 /**
- * @description  : what解析，三级判断
+ * @description  : action解析，三级判断
  * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
  * @return        {*}
  */
@@ -906,13 +944,13 @@ static void focus_ENCODE(cJSON *STR_Payload) // action
 
 
 /**
- * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ * @description  : 升降架上升指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"incrementing_started","what":"elevator"}
+ *				  action:  升降架上升incrementing_started
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void elevator_incrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void elevator_incrementing_started_ENCODE(cJSON *STR_Payload) //  升降架上升指令
 {
 	SendLiftSpeedValue(100);
 #if DEBUG
@@ -922,13 +960,13 @@ static void elevator_incrementing_started_ENCODE(cJSON *STR_Payload) //  increme
 
 
 /**
- * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ * @description  : 松开上升按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"incrementing_ended","what":"elevator"}
+ *				  action:  升降架上升incrementing_ended
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void elevator_incrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void elevator_incrementing_ended_ENCODE(cJSON *STR_Payload) //  松开上升按钮发送指令
 {
 	SendLiftSpeedValue(0);
 #if DEBUG
@@ -938,13 +976,13 @@ static void elevator_incrementing_ended_ENCODE(cJSON *STR_Payload) //  increment
 
 
 /**
- * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
- *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
+ * @description  :   升降架下降指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"decrementing_started","what":"elevator"}
+ *				  action:  升降架下降decrementing_started
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void elevator_decrementing_started_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void elevator_decrementing_started_ENCODE(cJSON *STR_Payload) //  升降架下降指令
 {
 	SendLiftSpeedValue(-100);
 #if DEBUG
@@ -953,13 +991,13 @@ static void elevator_decrementing_started_ENCODE(cJSON *STR_Payload) //  increme
 }
 
 /**
- * @description  : 按下increment按钮发送指令
- * @param         {cJSON*} STR_Payload:"payload":{"action":"reset","what":"camera"}
+ * @description  : 松开下降按钮发送指令
+ * @param         {cJSON*} STR_Payload:"payload":{"action":"decrementing_ended","what":"elevator"}
  *				  action:  incrementing_started 组件设置的值（数值可以调整，待确定）
  *				  what: 自定义组件名称
  * @return        {*}
  */
-static void elevator_decrementing_ended_ENCODE(cJSON *STR_Payload) //  incrementing_started 组件设置的值（数值可以调整，待确定）
+static void elevator_decrementing_ended_ENCODE(cJSON *STR_Payload) //  松开下降按钮发送指令
 {
 	SendLiftSpeedValue(0);
 #if DEBUG
@@ -968,7 +1006,7 @@ static void elevator_decrementing_ended_ENCODE(cJSON *STR_Payload) //  increment
 }
 
 /**
- * @description  : 结构体数组，同属action中的二级子指令，根据action值做三级级判断
+ * @description  : 结构体数组，同属elevator中的三级子指令，根据action值做三级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
  *				 messageName[30]：指令名称
  *
@@ -982,7 +1020,7 @@ static JsonDecode_task_t elevator_tasks[] = // 从上往下代表优先级
 };
 #define elevatorCOMMAND_NUM (sizeof(elevator_tasks) / sizeof(JsonDecode_task_t))
 /**
- * @description  : what解析，三级判断
+ * @description  : action解析，三级判断
  * @param         {cJSON*} STR_Payload:利用Payload中的action具体判断指令
  * @return        {*}
  */
@@ -1190,31 +1228,10 @@ void CANToWIFIDecode(CanRxMsg *rxMessage, uint8_t *CANToWIFIRECBuff)
 		rxMessage->Data[i] = CANToWIFIRECBuff[Uart3_Cnt++]; // 第一帧信息
 	}
 
-	// CanToWiFiID.StdId.id = RxMessage.StdId;
-
-	// UDPSendBuff[CAN_Cnt++] = CanToWiFiID.StdId.data[0];
-	// UDPSendBuff[CAN_Cnt++] = CanToWiFiID.StdId.data[1];
-	// UDPSendBuff[CAN_Cnt++] = CanToWiFiID.StdId.data[2];
-	// UDPSendBuff[CAN_Cnt++] = CanToWiFiID.StdId.data[3];
-
-	// CanToWiFiID.ExtId.id = RxMessage.ExtId;
-	// UDPSendBuff[CAN_Cnt++] = CanToWiFiID.ExtId.data[0];
-	// UDPSendBuff[CAN_Cnt++] = CanToWiFiID.ExtId.data[1];
-	// UDPSendBuff[CAN_Cnt++] = CanToWiFiID.ExtId.data[2];
-	// UDPSendBuff[CAN_Cnt++] = CanToWiFiID.ExtId.data[3];
-
-	// UDPSendBuff[CAN_Cnt++] = RxMessage.IDE;
-	// UDPSendBuff[CAN_Cnt++] = RxMessage.RTR;
-	// UDPSendBuff[CAN_Cnt++] = RxMessage.DLC;
-
-	// for(uint8_t i = 0; i < RxMessage.DLC; i++)
-	// {
-	// 	UDPSendBuff[CAN_Cnt++]=RxMessage.Data[i];
-	// }
 }
 
 /**
- * @description  : CMSG_METERCNT1VALUE编码
+ * @description  : CMSG_METERCNT1VALUE编码，左侧米计数器功能（待确定）
  * @return        {*}
  */
 void CMSG_METERCNT1VALUE_CODE(void)
@@ -1270,7 +1287,7 @@ void CMSG_METERCNT1VALUE_CODE(void)
 
 
 /**
- * @description  : CMSG_METERCNT1VALUE编码
+ * @description  : CMSG_METERCNT1VALUE编码，小车压力状态显示
  * @return        {*}
  */
 void CMSG_ROVVERPRESSURE_CODE(void)
@@ -1349,7 +1366,7 @@ void CMSG_ROVVERPRESSURE_CODE(void)
 
 
 /**
- * @description  : CMSG_METERCNT1VALUE编码
+ * @description  : CMSG_METERCNT1VALUE编码，小车当前倾斜角度，侧翻状态报警
  * @return        {*}
  */
 void CMSG_INCLINATIONXDEG_CODE(void)
@@ -1405,7 +1422,7 @@ void CMSG_INCLINATIONXDEG_CODE(void)
 
 	sendToApp(TCPSendBuff);
 
-	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("crawlerAngleInDegress"));
+	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("crawlerAngleInDegrees"));
 	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatofloat.value));	
 
 	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
@@ -1426,7 +1443,7 @@ void CMSG_INCLINATIONXDEG_CODE(void)
 
 
 /**
- * @description  : CMSG_METERCNT1VALUE编码
+ * @description  : CMSG_METERCNT1VALUE编码，当前小车温度显示
  * @return        {*}
  */
 void CMSG_ROVVERTEMP_CODE(void)
