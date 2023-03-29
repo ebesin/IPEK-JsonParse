@@ -13,7 +13,7 @@
 
 typedef struct SocketData
 {
-    char data[500];
+    char data[1000];
     int len;
 } SocketData;
 

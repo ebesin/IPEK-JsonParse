@@ -201,7 +201,6 @@ void *start_up_process(void *args)
     };
     sendToApp(initialization_cmd);
     int cmd_len = sizeof(start_up_process_cmds) / sizeof(StartUpProcessCmd);
-    printf("cmd_len:\t%d\n", cmd_len);
     for (int i = 0; i < cmd_len - 1; i++)
     {
         sendToRobot(start_up_process_cmds[i].cmd, start_up_process_cmds[i].cmd[10] + 11);
