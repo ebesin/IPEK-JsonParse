@@ -1115,6 +1115,20 @@ static void EMERGENCY_STOP_ENCODE(cJSON *STR_Payload) // 'reset' 摄像头恢复
 #endif
 }
 
+
+/**
+ * @description  : START_VIDEO_STREAMING_RESP_ENCODE
+ * @param         {cJSON*} STR_Payload:"payload":{"ip":"192.168.16.100"}
+ * @return        {*}
+ */
+static void START_VIDEO_STREAMING_RESP_ENCODE(cJSON *STR_Payload) // 开机回复
+{
+
+#if DEBUG
+	printf("START_VIDEO_STREAMING_RESP_ENCODE\r\n");
+#endif
+}
+
 /**
  * @description  : 结构体数组，一级指令，根据messageName值做一级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
@@ -1127,6 +1141,7 @@ JsonDecode_task_t JsonDecode_tasks[] = // 从上往下代表优先级
 		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"}, 					 // Full stop		
 		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},						 // UPDATE_VALUE
 		{ACTION_ENCODE, "ACTION"},						 		 	 // ACTION
+		{START_VIDEO_STREAMING_RESP_ENCODE, "START_VIDEO_STREAMING_RESP"},				 // 开机回复	
 };
 
 #define COMMAND_NUM (sizeof(JsonDecode_tasks) / sizeof(JsonDecode_task_t))
