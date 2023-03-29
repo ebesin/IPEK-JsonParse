@@ -73,6 +73,12 @@ struct tcp_info
     uint32_t tcpi_total_retrans;
 };
 
+typedef struct StartUpProcessCmd
+{
+    char cmd[50];     // 指令
+    double send_time; // 发送时间
+} StartUpProcessCmd;
+
 /**
  * @description  : 初始化udp套接字，包括句柄，本地套接字，目标套接字
  * @param         {int} *udpSock:                       本地TCP操作句柄指针
