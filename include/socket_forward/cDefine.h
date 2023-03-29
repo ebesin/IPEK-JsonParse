@@ -28,6 +28,6 @@
 // #define DEST_UDP_IP "192.168.1.145" // udp�?标ip
 // #define DEST_TCP_IP "192.168.1.145" // tcp�?标ip
 
-#define DEBUG 0
+#define DEBUG 1
 
 #endif
