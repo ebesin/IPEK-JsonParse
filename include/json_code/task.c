@@ -95,23 +95,23 @@ void RockerConversion_180_Camera_Test(SCHAR *scV1, SCHAR *scV2, double angle, do
 {
 	if ((angle >= -45) && (angle < 45))
 	{
-		*scV1 = (SCHAR)(power * 100);
+		*scV1 = (SCHAR)(power );
 		*scV2 = (SCHAR)(0);
 	}
 	else if ((angle < -45) && (angle >= -135))
 	{
 		*scV1 = (SCHAR)(0);
-		*scV2 = (SCHAR)(power * 100);
+		*scV2 = (SCHAR)(power );
 	}
 	else if ((angle >= 135)||(angle < -135))
 	{
-		*scV1 = (SCHAR)(-power * 100);
+		*scV1 = (SCHAR)(-power );
 		*scV2 = (SCHAR)(0);
 	}
 	else if ((angle < 135)&&(angle >= 45))
 	{
 		*scV1 = (SCHAR)(0);
-		*scV2 = (SCHAR)(-power*100);
+		*scV2 = (SCHAR)(-power );
 	}
 }
 /**
@@ -160,23 +160,23 @@ void RockerConversion_180_Car_Test(SCHAR *scV1, SCHAR *scV2, double angle, doubl
 {
 	if ((angle >= -45) && (angle < 45))
 	{
-		*scV1 = (SCHAR)(power * 100);
-		*scV2 = (SCHAR)(- power * 100);
+		*scV1 = (SCHAR)(power );
+		*scV2 = (SCHAR)(- power );
 	}
 	else if ((angle < -45) && (angle >= -135))
 	{
-		*scV1 = (SCHAR)(power * 100);
-		*scV2 = (SCHAR)(power * 100);
+		*scV1 = (SCHAR)(power );
+		*scV2 = (SCHAR)(power );
 	}
 	else if ((angle >= 135)||(angle < -135))
 	{
-		*scV1 = (SCHAR)(-power * 100);
-		*scV2 = (SCHAR)(power * 100);
+		*scV1 = (SCHAR)(-power );
+		*scV2 = (SCHAR)(power );
 	}
 	else if ((angle < 135)&&(angle >= 45))
 	{
-		*scV1 = (SCHAR)( -power*100);
-		*scV2 = (SCHAR)(-power*100);
+		*scV1 = (SCHAR)( -power);
+		*scV2 = (SCHAR)(-power);
 	}
 }
 
@@ -1491,6 +1491,60 @@ void CMSG_ROVVERTEMP_CODE(void)
 	cJSON_free(TCPSendBuff);
 }
 
+
+/**
+ * @description  : CMSG_METERCNT1VALUE编码，离合器状态
+ * @return        {*}
+ */
+void CMSG_CLUTCHSTATE_CODE(void)
+{
+	cJSON *cjson_can = NULL;
+	cJSON *cjson_header = NULL;
+	cJSON *cjson_payload = NULL;
+	char *TCPSendBuff = NULL;
+	char clutchStatus;
+
+	clutchStatus = RxMessage.Data[0];
+
+	cjson_can = cJSON_CreateObject();
+
+	cjson_header = cJSON_CreateObject();
+
+	cJSON_AddStringToObject(cjson_header, "messageType", "IPEK_CHINA_GUI");
+	cJSON_AddStringToObject(cjson_header, "messageName", "UPDATE_VALUE");
+
+	cJSON_AddItemToObject(cjson_can, "header", cjson_header);
+
+	cjson_payload = cJSON_CreateObject();
+
+	cJSON_AddStringToObject(cjson_payload, "what", "clutchStatus");
+	cJSON_AddBoolToObject(cjson_payload, "value", clutchStatus);
+
+
+	cJSON_AddItemToObject(cjson_can, "payload", cjson_payload);
+
+	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
+	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+	char *enter = "\n\0";
+	strncat(TCPSendBuff, enter, 2);
+	CAN_Cnt = strlen(TCPSendBuff);
+#if DEBUG
+	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
+
+	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+#endif
+	/*-----------------
+	-------------------
+	-------------------发送函数请放这（发送TCPSendBuff）
+													-------------------
+													-------------------
+													-----------------*/
+	sendToApp(TCPSendBuff);
+	cJSON_Delete(cjson_can); // 释放内存
+	cJSON_free(TCPSendBuff);
+}
+
+
 /**
  * @description  : CAN→TCP 		使用void Scheduler_Code(void)		此函数在can.c中的void CAN_RX_IRQHandler(void)接收中断调用，
  *								添加新的编码需要根据CANID添加case和相应的编码函数
@@ -1534,6 +1588,11 @@ void Scheduler_Code(uint8_t *CANToWiFiRecBuff)
 		case CMSG_INCLINATIONXDEG:
 		{
 			CMSG_INCLINATIONXDEG_CODE();
+			break;
+		}
+		case CMSG_CLUTCHSTATE:
+		{
+			CMSG_CLUTCHSTATE_CODE();
 			break;
 		}
 		default:
