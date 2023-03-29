@@ -110,6 +110,12 @@ void initSocket();
 void connectToHost();
 
 /**
+ * @description  :  接收到pad端的视频流确认消息
+ * @return        {*}
+ */
+void onVideoStreamConfirm();
+
+/**
  * @description  :  通过udp发送指令到管道机器人(不是真正的发送，只是将数据入队)
  * @param         {char} send_buf:      发送的buf
  * @param         {int} len:            发送的数据长度
