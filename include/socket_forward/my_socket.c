@@ -27,6 +27,8 @@ struct sockaddr_in my_tcp_sock_addr;
 struct sockaddr_in dest_tcp_sock_addr;
 // tcp信息
 struct tcp_info info;
+int finished_start_up = 0;
+int finished_video_streaming = 0;
 // tcp发送队列
 CircleQueue tcp_send_queue;
 // udp发送队列
@@ -35,6 +37,10 @@ CircleQueue udp_send_queue;
 pthread_t t_udp;
 // tcp线程标识符
 pthread_t t_tcp;
+// 开机过程线程标识符
+pthread_t t_start_up;
+// 开启视频流发送线程标识符
+pthread_t t_start_video_streaming;
 // udp互斥锁
 pthread_mutex_t udp_mutex = PTHREAD_MUTEX_INITIALIZER;
 // tcp互斥锁
@@ -106,28 +112,6 @@ long int getCurrentTime()
     return tp.tv_usec;
 }
 
-void connectToHost()
-{
-reconnect:
-    initTCP(&my_tcp_sock, &my_tcp_sock_addr, &dest_tcp_sock_addr);
-    // 若连接失败则重连
-    if (connect(my_tcp_sock, (void *)&dest_tcp_sock_addr, sizeof(dest_tcp_sock_addr)) < 0)
-    {
-        perror("Error:connect");
-        close(my_tcp_sock);
-        sleep(1);
-        goto reconnect;
-    }
-}
-
-void initSocket()
-{
-    initUDP(&my_udp_sock, &my_udp_sock_addr, &dest_udp_sock_addr);
-    connectToHost();
-    initQueue(&tcp_send_queue);
-    initQueue(&udp_send_queue);
-}
-
 void sendToRobot(char send_buf[], int len)
 {
     SocketData socket_data;
@@ -149,6 +133,11 @@ void sendToApp(char *send_str)
     pthread_mutex_lock(&tcp_mutex);
     enQueue(&tcp_send_queue, &socket_data);
     pthread_mutex_unlock(&tcp_mutex);
+}
+
+void onVideoStreamConfirm()
+{
+    finished_video_streaming = 1;
 }
 
 void *udp_send_thread(void *args)
@@ -188,6 +177,77 @@ void *tcp_send_thread(void *args)
     }
 }
 
+void *start_up_process(void *args)
+{
+    // 初始化指令
+    char *initialization_cmd = "{\"header\":{\"messageType\":\"IPEK_CHINA_GUI\",\"messageName\":\"INITIALIZATION\"},\"payload\":{\"highBeamMainLightsValueInPercent\":0,\"lowBeamMainLightsValueInPercent\":0,\"autoAngleMainLightsStatus\":true,\"autoAngleMainLightsValueInDegrees\":0,\"auxiliaryLightsValueInPercent\":0,\"laserIntensity\":\"0%\",\"zoomingStatus\":false,\"focusType\":\"auto\",\"focusingStatus\":false,\"elevatorStatus\":false,\"cameraChosen\":\"front\",\"rearCameraAmount\":2,\"rearCameraIdx\":1,\"temperatureInCelsius\":25,\"pressureInHpa\":500,\"pressureStatus\":\"ok\",\"crawlerAngleInDegrees\":-2,\"crawlerOver\":\"ok\",\"localizerFrequency\":\"512Hz\",\"clutchStatus\":true,\"cruiseControlStatus\":false,\"cruiseControlValue\":0,\"cableReelType\":\"automatic\",\"cableReelPower\":10,\"cableReelSpeed\":0,\"elevatorValueInPercent\":0,\"elevatorValueInMm\":0}}\n";
+    StartUpProcessCmd start_up_process_cmds[] = {
+        {{0xF4, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01}, 0},              // 开机
+        {{0x34, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x01}, 5},        // 开电
+        {{0xE4, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x13, 0x01}, 17}, // 急停
+        {{0x94, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00}, 17.5},     // 离合器
+        {{0x94, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01}, 17.5},           // 离合器
+        {{0x84, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01}, 18},             // 激光关
+        {{0x84, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00}, 18},             // 激光关
+        {{0x74, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00}, 18.5},           // 辅助光源关
+        {{0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00}, 19},             // 相机灯光关
+        {{0xE4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x37}, 24},             // 自动对焦
+        {{0x34, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00}, 24.5},           // 绕线盘自动模式
+        {{0xC4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0A}, 25},             // 绕线盘功率10
+        {{0xE4, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x13, 0x01}, 36}, // 急停
+        {{0xE4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x89}, 36.5},           // 第一条对焦
+        {{0xE4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xD3}, 37},             // 对焦
+        {{0xE4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x37}, 37},             // 对焦
+    };
+    send(my_tcp_sock, initialization_cmd, strlen(initialization_cmd), 0);
+    sleep(1);
+    int cmd_len = sizeof(start_up_process_cmds) / sizeof(StartUpProcessCmd);
+    for (int i = 0; i < cmd_len - 1; i++)
+    {
+        sendToRobot(start_up_process_cmds[i].cmd, start_up_process_cmds[i].cmd[10] + 11);
+        usleep((start_up_process_cmds[i + 1].send_time - start_up_process_cmds[i].send_time) * 1000000);
+    }
+    sendToRobot(start_up_process_cmds[cmd_len - 1].cmd, start_up_process_cmds[cmd_len - 1].cmd[10] + 11);
+}
+
+void *start_video_streaming(void *args)
+{
+    char *start_video_cmd = "{\"header\":{\"messageId\":102,\"messageName\":\"START_VIDEO_STREAMING_REQ\",\"messageType\":\"VIDEO\"},\"payload\":{\"port\":5000}}\n";
+    while (!finished_video_streaming)
+    {
+        sendToApp(start_video_cmd);
+        sleep(1);
+    }
+}
+
+void connectToHost()
+{
+reconnect:
+    initTCP(&my_tcp_sock, &my_tcp_sock_addr, &dest_tcp_sock_addr);
+    // 若连接失败则重连
+    if (connect(my_tcp_sock, (void *)&dest_tcp_sock_addr, sizeof(dest_tcp_sock_addr)) < 0)
+    {
+        perror("Error:connect");
+        close(my_tcp_sock);
+        sleep(1);
+        goto reconnect;
+    }
+    else
+    {
+        sleep(1);
+        pthread_create(&t_start_up, NULL, start_up_process, NULL);
+        pthread_create(&t_start_video_streaming, NULL, start_video_streaming, NULL);
+    }
+}
+
+void initSocket()
+{
+    initUDP(&my_udp_sock, &my_udp_sock_addr, &dest_udp_sock_addr);
+    connectToHost();
+    initQueue(&tcp_send_queue);
+    initQueue(&udp_send_queue);
+}
+
 void listenAndForward()
 {
     fd_set rset;
@@ -210,6 +270,8 @@ void listenAndForward()
 #if DEBUG
             printf("socket Reconnecting....\n");
 #endif
+            pthread_cancel(t_start_up);
+            pthread_cancel(t_start_video_streaming);
             close(my_tcp_sock);
             sleep(1);
             connectToHost();

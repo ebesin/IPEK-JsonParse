@@ -73,6 +73,12 @@ struct tcp_info
     uint32_t tcpi_total_retrans;
 };
 
+typedef struct StartUpProcessCmd
+{
+    char cmd[50];     // 指令
+    double send_time; // 发送时间
+} StartUpProcessCmd;
+
 /**
  * @description  : 初始化udp套接字，包括句柄，本地套接字，目标套接字
  * @param         {int} *udpSock:                       本地TCP操作句柄指针
@@ -102,6 +108,12 @@ void initSocket();
  * @return        {*}
  */
 void connectToHost();
+
+/**
+ * @description  :  接收到pad端的视频流确认消息
+ * @return        {*}
+ */
+void onVideoStreamConfirm();
 
 /**
  * @description  :  通过udp发送指令到管道机器人(不是真正的发送，只是将数据入队)
