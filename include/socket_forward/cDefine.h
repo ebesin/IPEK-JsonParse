@@ -24,9 +24,9 @@
 #define UDP_SEND_FREQUENCY 100; // udp发送最大�?�率(Hz)
 #define TCP_SEND_FREQUENCY 500; // tcp发送最大�?�率(Hz)
 
-// #define MY_HOST "192.168.1.146"     // �?地ip
-// #define DEST_UDP_IP "192.168.1.145" // udp�?标ip
-// #define DEST_TCP_IP "192.168.1.145" // tcp�?标ip
+// #define MY_HOST "192.168.1.100"    // �?地ip
+// #define DEST_UDP_IP "192.168.1.93" // udp�?标ip
+// #define DEST_TCP_IP "192.168.1.93" // tcp�?标ip
 
 #define DEBUG 0
 
