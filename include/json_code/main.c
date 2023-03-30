@@ -25,7 +25,7 @@
 //{\"header\":{\"messageId\":681,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":\"rear\",\"what\":\"cameraChosen\"}}
 //{\"header\":{\"messageId\":682,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":2,\"what\":\"rearCameraIdx\"}}
 //{\"header\":{\"messageId\":696,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":-98.10724803565803,\"power\":1},\"what\":\"roverJoystick\"}}
-char DecodeRECBuff[500] = "{\"header\":{\"messageId\":55,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":false,\"what\":\"clutchStatus\"}}"; // �������ݴ����?
+char DecodeRECBuff[500] = "{\"header\":{\"messageId\":5,\"messageName\":\"APPLICATION_CLOSED\",\"messageType\":\"STATUS\"},\"payload\":{}}"; // �������ݴ����?
 char CodeRECBuff[500] ={0xF2,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x01};
 //{0x82,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0xF4,0x01,0x00,0x00,0xF5,0x01,0x00,0x01}
 //{0x72,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x25}
