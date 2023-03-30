@@ -199,7 +199,8 @@ void *start_up_process(void *args)
         {{0xE4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xD3}, 37},             // 对焦
         {{0xE4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x37}, 37},             // 对焦
     };
-    sendToApp(initialization_cmd);
+    send(my_tcp_sock, initialization_cmd, strlen(initialization_cmd), 0);
+    sleep(1);
     int cmd_len = sizeof(start_up_process_cmds) / sizeof(StartUpProcessCmd);
     for (int i = 0; i < cmd_len - 1; i++)
     {
@@ -233,12 +234,9 @@ reconnect:
     }
     else
     {
-        if (!finished_start_up)
-        {
-            pthread_create(&t_start_up, NULL, start_up_process, NULL);
-            pthread_create(&t_start_video_streaming, NULL, start_video_streaming, NULL);
-            finished_start_up = 1;
-        }
+        sleep(1);
+        pthread_create(&t_start_up, NULL, start_up_process, NULL);
+        pthread_create(&t_start_video_streaming, NULL, start_video_streaming, NULL);
     }
 }
 
@@ -272,6 +270,8 @@ void listenAndForward()
 #if DEBUG
             printf("socket Reconnecting....\n");
 #endif
+            pthread_cancel(t_start_up);
+            pthread_cancel(t_start_video_streaming);
             close(my_tcp_sock);
             sleep(1);
             connectToHost();
