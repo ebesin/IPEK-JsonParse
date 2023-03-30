@@ -1102,6 +1102,20 @@ static void START_VIDEO_STREAMING_RESP_ENCODE(cJSON *STR_Payload) // 开机回�
 #endif
 }
 
+
+/**
+ * @description  : APPLICATION_CLOSED_ENCODE
+ * @param         {cJSON*} STR_Payload:"payload":{"ip":"192.168.16.100"}
+ * @return        {*}
+ */
+static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 开机回复
+{
+	Shutdown_CMD();
+#if DEBUG
+	printf("APPLICATION_CLOSED_ENCODE\r\n");
+#endif
+}
+
 /**
  * @description  : 结构体数组，一级指令，根据messageName值做一级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
@@ -1110,11 +1124,14 @@ static void START_VIDEO_STREAMING_RESP_ENCODE(cJSON *STR_Payload) // 开机回�
  */
 JsonDecode_task_t JsonDecode_tasks[] = // 从上往下代表优先级
 	{
-		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"},	   // 开关机
-		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"},						   // Full stop
-		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},							   // UPDATE_VALUE
-		{ACTION_ENCODE, "ACTION"},										   // ACTION
-		{START_VIDEO_STREAMING_RESP_ENCODE, "START_VIDEO_STREAMING_RESP"}, // 开机回复
+
+		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"}, // 开关机
+		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"}, 					 // Full stop		
+		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},						 // UPDATE_VALUE
+		{ACTION_ENCODE, "ACTION"},						 		 	 // ACTION
+		{START_VIDEO_STREAMING_RESP_ENCODE, "START_VIDEO_STREAMING_RESP"},				 // 开机回复
+		{APPLICATION_CLOSED_ENCODE, "APPLICATION_CLOSED"},				 // 开机回复		
+
 };
 
 #define COMMAND_NUM (sizeof(JsonDecode_tasks) / sizeof(JsonDecode_task_t))
