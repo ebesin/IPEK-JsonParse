@@ -2,7 +2,7 @@
  * @Author       : iPEK
  * @Date         : 2023-03-07
  * @LastEditTime : 2023-03-10
- * @Description  : CAN解码、发送相关H文件，主要是配合上位机的CAN指令发送，文件内�?�已封�?�成材料�?提供的内�?
+ * @Description  : CAN解码、发送相关H文件，主要是配合上位机的CAN指令发送，文件内�?�已封�?�成材料�?提供的内�?
  *
  * Copyright (c) 2023 by iPEK, All Rights Reserved.
  */
@@ -855,4 +855,5 @@ extern void SendLiftSpeedValue (SCHAR scLiftSpeed);
 extern void SendClutch(CHAR cOnOff);
 extern void SendClutchOpen(CHAR cOnOff);
 extern void SendBackViewCameraSwitchEvent(UCHAR ucVal);
+extern void SendAutoHighBeamMainLightsValueInPercentEvent(UCHAR ucVal);
 #endif
