@@ -587,6 +587,23 @@ static void rearCameraIdx_ENCODE(cJSON *STR_Payload) // 切换第二个后置摄
 #endif
 }
 
+/**
+ * @description  : 自动灯光关闭，调节远光灯数值（自动灯光切换按钮为ON时）
+ * @param         {cJSON*} STR_Payload:"payload":{"value":56,"what":"autoHighBeamMainLightsValueInPercent"}
+ *				  what: 自定义组件名称
+ *				  value: 主灯灯光强度值，强度值范围0 - 100
+ * @return        {*}
+ */
+static void autoHighBeamMainLightsValueInPercent_ENCODE(cJSON *STR_Payload) // 自动灯光关闭，调节远光灯数值（自动灯光切换按钮为ON时）
+{
+
+	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
+	SendAutoHighBeamMainLightsValueInPercentEvent(str_payload_value);
+#if DEBUG
+	printf("clutchEnabled_ENCODE\r\n");
+#endif
+}
+
 #define UpdateValueCOMMAND_NUM (sizeof(Update_Value_tasks) / sizeof(JsonDecode_task_t))
 /**
  * @description  : 结构体数组，同属Update中的二级子指令，根据what值做二级判断
@@ -614,6 +631,7 @@ static JsonDecode_task_t Update_Value_tasks[] = // 从上往下代表优先级
 		{clutchStatus_ENCODE, "clutchStatus"},											 // 右侧离合器开关
 		{cameraChosen_ENCODE, "cameraChosen"},											 // 前置摄像头切换为后置摄像头
 		{rearCameraIdx_ENCODE, "rearCameraIdx"},										 // 切换第二个后置摄像头
+		{autoHighBeamMainLightsValueInPercent_ENCODE, "autoHighBeamMainLightsValueInPercent"},										 // 切换第二个后置摄像头
 };
 
 /**
@@ -1234,6 +1252,79 @@ void CANToWIFIDecode(CanRxMsg *rxMessage, uint8_t *CANToWIFIRECBuff)
 	}
 }
 
+
+/**
+ * @description  : CMSG_LIFTPOSITION_ELEVATOR编码，升降架高度和百分比显示
+ * @return        {*}
+ */
+void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
+{
+	cJSON *cjson_can = NULL;
+	cJSON *cjson_header = NULL;
+	cJSON *cjson_payload = NULL;
+	char *TCPSendBuff = NULL;
+	DataTouInt16_t datatoint16;
+	char scvalue;
+	for (uint8_t i = 0; i < 2; i++)
+	{
+		datatoint16.data[i] = RxMessage.Data[i];
+	}
+	scvalue = RxMessage.Data[5];
+
+	cjson_can = cJSON_CreateObject();
+
+	cjson_header = cJSON_CreateObject();
+	cJSON_AddStringToObject(cjson_header, "messageType", "IPEK_CHINA_GUI");	
+	cJSON_AddStringToObject(cjson_header, "messageName", "UPDATE_VALUE");
+
+	cJSON_AddItemToObject(cjson_can, "header", cjson_header);
+
+	cjson_payload = cJSON_CreateObject();
+
+	cJSON_AddStringToObject(cjson_payload, "what", "elevatorValueInPercent");
+	cJSON_AddNumberToObject(cjson_payload, "value", scvalue);
+
+	cJSON_AddItemToObject(cjson_can, "payload", cjson_payload);
+
+	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
+	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+	char *enter = "\n\0";
+	strncat(TCPSendBuff, enter, 2);
+	CAN_Cnt = strlen(TCPSendBuff);
+#if DEBUG
+	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
+
+	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+#endif
+	/*-----------------
+	-------------------
+	-------------------发送函数请放这（发送TCPSendBuff）
+													-------------------
+													-------------------
+													-----------------*/
+
+	sendToApp(TCPSendBuff);
+
+	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("elevatorValueInMm"));
+	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatoint16.value));
+
+	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
+	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+	strncat(TCPSendBuff, enter, 2);
+	CAN_Cnt = strlen(TCPSendBuff);
+	sendToApp(TCPSendBuff);
+#if DEBUG
+	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
+
+	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+#endif
+
+	cJSON_Delete(cjson_can); // 释放内存
+	cJSON_free(TCPSendBuff);
+}
+
+
+
 /**
  * @description  : CMSG_METERCNT1VALUE编码，左侧米计数器功能（待确定）
  * @return        {*}
@@ -1256,9 +1347,8 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	cjson_can = cJSON_CreateObject();
 
 	cjson_header = cJSON_CreateObject();
-	cJSON_AddNumberToObject(cjson_header, "messageId", MESSAGEID);
-	cJSON_AddStringToObject(cjson_header, "messageName", "CHANGE_METER_COUNTER_VALUE_REQ");
-	cJSON_AddStringToObject(cjson_header, "messageType", "CONTROL");
+	cJSON_AddStringToObject(cjson_header, "messageName", "METER_COUNTER_STATUS_IND");
+	cJSON_AddStringToObject(cjson_header, "messageType", "MONITORING");
 	cJSON_AddItemToObject(cjson_can, "header", cjson_header);
 
 	cjson_payload = cJSON_CreateObject();
@@ -1589,6 +1679,11 @@ void Scheduler_Code(uint8_t *CANToWiFiRecBuff)
 	case CMSG_CLUTCHSTATE:
 	{
 		CMSG_CLUTCHSTATE_CODE();
+		break;
+	}
+	case CMSG_LIFTPOSITION_ELEVATOR:
+	{
+		CMSG_LIFTPOSITION_ELEVATOR_CODE();
 		break;
 	}
 	default:
