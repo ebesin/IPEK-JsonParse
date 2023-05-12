@@ -1353,7 +1353,7 @@ void CMSG_METERCNT1VALUE_CODE(void)
 
 	cjson_payload = cJSON_CreateObject();
 	cJSON_AddFalseToObject(cjson_payload, "isLateral");
-	cJSON_AddStringToObject(cjson_payload, "unit", "m");
+	cJSON_AddStringToObject(cjson_payload, "unit", "meter");
 
 	cJSON_AddNumberToObject(cjson_payload, "value", vaule_f);
 	cJSON_AddItemToObject(cjson_can, "payload", cjson_payload);
