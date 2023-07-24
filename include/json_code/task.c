@@ -1627,11 +1627,61 @@ void CMSG_CLUTCHSTATE_CODE(void)
 	cJSON_free(TCPSendBuff);
 }
 
+
+void NODEID_SEND_CODE(void)
+{
+	if((RxMessage.Data[0]==0x03)&&(RxMessage.Data[7]==0x03)&&(RxMessage.Data[4]==0x7B))
+	{
+		cJSON *cjson_can = NULL;
+		cJSON *cjson_header = NULL;
+		cJSON *cjson_payload = NULL;
+		char *TCPSendBuff = NULL;
+
+		cjson_can = cJSON_CreateObject();
+
+		cjson_header = cJSON_CreateObject();
+
+		cJSON_AddStringToObject(cjson_header, "messageType", "IPEK_CHINA_GUI");
+		cJSON_AddStringToObject(cjson_header, "messageName", "UPDATE_VALUE");
+
+		cJSON_AddItemToObject(cjson_can, "header", cjson_header);
+
+		cjson_payload = cJSON_CreateObject();
+
+		cJSON_AddStringToObject(cjson_payload, "what", "autoAngleMainLightsPossible");
+		cJSON_AddBoolToObject(cjson_payload, "value", 1);
+
+		cJSON_AddItemToObject(cjson_can, "payload", cjson_payload);
+
+		TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
+		TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
+		char *enter = "\n\0";
+		strncat(TCPSendBuff, enter, 2);
+		CAN_Cnt = strlen(TCPSendBuff);
+	#if DEBUG
+		printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
+
+		printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+	#endif
+		/*-----------------
+		-------------------
+		-------------------发送函数请放这（发送TCPSendBuff）
+														-------------------
+														-------------------
+														-----------------*/
+		sendToApp(TCPSendBuff);
+		cJSON_Delete(cjson_can); // 释放内存
+		cJSON_free(TCPSendBuff);
+	}
+}
+
+
 /**
  * @description  : CAN→TCP 		使用void Scheduler_Code(void)		此函数在can.c中的void CAN_RX_IRQHandler(void)接收中断调用，
  *								添加新的编码需要根据CANID添加case和相应的编码函数
  * @return        {*}
  */
+#define nodeID 0x103
 void Scheduler_Code(uint8_t *CANToWiFiRecBuff)
 {
 #if DEBUG
@@ -1644,53 +1694,61 @@ void Scheduler_Code(uint8_t *CANToWiFiRecBuff)
 		CANID = RxMessage.StdId;
 	else
 		CANID = RxMessage.ExtId;
-
+#if DEBUG
+	printf("CANID:%x \r\n",CANID);
+#endif
 	// 接收成功
 	MESSAGEID++;
 	switch (CANID)
 	{
-	case CMSG_METERCNT1VALUE:
-	{
-		CMSG_METERCNT1VALUE_CODE();
+		case nodeID:
+		{
+			NODEID_SEND_CODE();
 
-		break;
-	}
-	case CMSG_ROVVERPRESSURE:
-	{
-		CMSG_ROVVERPRESSURE_CODE();
+			break;
+		}
+		case CMSG_METERCNT1VALUE:
+		{
+			CMSG_METERCNT1VALUE_CODE();
 
-		break;
-	}
-	case CMSG_ROVVERTEMP:
-	{
-		CMSG_ROVVERTEMP_CODE();
+			break;
+		}
+		case CMSG_ROVVERPRESSURE:
+		{
+			CMSG_ROVVERPRESSURE_CODE();
 
-		break;
-	}
-	case CMSG_INCLINATIONXDEG:
-	{
-		CMSG_INCLINATIONXDEG_CODE();
-		break;
-	}
-	case CMSG_CLUTCHSTATE:
-	{
-		CMSG_CLUTCHSTATE_CODE();
-		break;
-	}
-	case CMSG_LIFTPOSITION_ELEVATOR:
-	{
-		CMSG_LIFTPOSITION_ELEVATOR_CODE();
-		break;
-	}
-	default:
-	{
+			break;
+		}
+		case CMSG_ROVVERTEMP:
+		{
+			CMSG_ROVVERTEMP_CODE();
 
-#if DEBUG
-		// printf("CAN指令错误\r\n");
-#endif
-		MESSAGEID--;
-		break;
-	}
+			break;
+		}
+		case CMSG_INCLINATIONXDEG:
+		{
+			CMSG_INCLINATIONXDEG_CODE();
+			break;
+		}
+		case CMSG_CLUTCHSTATE:
+		{
+			CMSG_CLUTCHSTATE_CODE();
+			break;
+		}
+		case CMSG_LIFTPOSITION_ELEVATOR:
+		{
+			CMSG_LIFTPOSITION_ELEVATOR_CODE();
+			break;
+		}
+		default:
+		{
+
+	#if DEBUG
+			// printf("CAN指令错误\r\n");
+	#endif
+			MESSAGEID--;
+			break;
+		}
 	}
 
 	//			USART3_DMA_TxConfig((u32*)UDPSendBuff,CAN_Cnt);
