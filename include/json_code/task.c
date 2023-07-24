@@ -1,7 +1,7 @@
 /*
  * @Author       : iPEK
  * @Date         : 2023-03-07
- * @LastEditTime : 2023-03-10
+ * @LastEditTime : 2023-07-04
  * @Description  : Json编码、解码相关C文件，
  *				   CAN→TCP 		使用void Scheduler_Code(void)		此函数在can.c中的void CAN_RX_IRQHandler(void)接收中断调用
  * 				   TCP→CAN		使用void Scheduler_Decode(void)		此函数在usart3.c中的void USARTx_IRQHandler(void)接收中断调用
@@ -192,7 +192,7 @@ static void roverJoystick_ENCODE(cJSON *STR_Payload) // 右侧操纵杆（控制
 {
 	cJSON *str_value = cJSON_GetObjectItem(STR_Payload, "value");
 	double str_payload_angle = cJSON_GetObjectItem(str_value, "angle")->valuedouble;
-	double str_payload_power = cJSON_GetObjectItem(str_value, "power")->valuedouble;
+	double str_payload_power = cJSON_GetObjectItem(str_value, "power")->valuedouble * 0.6;
 	SCHAR str_payload_scV1, str_payload_scV2;
 
 	RockerConversion_180_Car_Test(&str_payload_scV1, &str_payload_scV2, str_payload_angle, str_payload_power);
@@ -613,25 +613,25 @@ static void autoHighBeamMainLightsValueInPercent_ENCODE(cJSON *STR_Payload) // �
  */
 static JsonDecode_task_t Update_Value_tasks[] = // 从上往下代表优先级
 	{
-		{cameraJoystick_ENCODE, "cameraJoystick"},										 // 左侧操纵杆（控制摄像头）
-		{roverJoystick_ENCODE, "roverJoystick"},										 // 摇杆控制车
-		{auxiliaryLightsValueInPercent_ENCODE, "auxiliaryLightsValueInPercent"},		 // 前后辅助光源
-		{laserIntensity_ENCODE, "laserIntensity"},										 // 激光控制
-		{localizerFrequency_ENCODE, "localizerFrequency"},								 // 左侧定位功能
-		{highBeamMainLightsValueInPercent_ENCODE, "highBeamMainLightsValueInPercent"},	 // 主灯控制（前后主灯）
-		{lowBeamMainLightsValueInPercent_ENCODE, "lowBeamMainLightsValueInPercent"},	 // 近光灯调节
-		{autoAngleMainLightsStatus_ENCODE, "autoAngleMainLightsStatus"},				 // 自动灯光切换按钮
-		{autoAngleMainLightsValueInDegrees_ENCODE, "autoAngleMainLightsValueInDegrees"}, // 近光灯控制
-		{cableReelPower_ENCODE, "cableReelPower"},										 // 自动模式，线缆盘张力控制
-		{cableReelSpeed_ENCODE, "cableReelSpeed"},										 // 手动模式，线缆盘速度控制
-		{cableReelType_ENCODE, "cableReelType"},										 // 手动模式自动模式切换按钮
-		{cruiseControlStatus_ENCODE, "cruiseControlStatus"},							 // 开启/关闭定速巡航
-		{cruiseControlValue_ENCODE, "cruiseControlValue"},								 // 设置定速巡航速度值
-		{focusType_ENCODE, "focusType"},												 // 切换手动模式和自动模式
-		{clutchStatus_ENCODE, "clutchStatus"},											 // 右侧离合器开关
-		{cameraChosen_ENCODE, "cameraChosen"},											 // 前置摄像头切换为后置摄像头
-		{rearCameraIdx_ENCODE, "rearCameraIdx"},										 // 切换第二个后置摄像头
-		{autoHighBeamMainLightsValueInPercent_ENCODE, "autoHighBeamMainLightsValueInPercent"},										 // 切换第二个后置摄像头
+		{cameraJoystick_ENCODE, "cameraJoystick"},											   // 左侧操纵杆（控制摄像头）
+		{roverJoystick_ENCODE, "roverJoystick"},											   // 摇杆控制车
+		{auxiliaryLightsValueInPercent_ENCODE, "auxiliaryLightsValueInPercent"},			   // 前后辅助光源
+		{laserIntensity_ENCODE, "laserIntensity"},											   // 激光控制
+		{localizerFrequency_ENCODE, "localizerFrequency"},									   // 左侧定位功能
+		{highBeamMainLightsValueInPercent_ENCODE, "highBeamMainLightsValueInPercent"},		   // 主灯控制（前后主灯）
+		{lowBeamMainLightsValueInPercent_ENCODE, "lowBeamMainLightsValueInPercent"},		   // 近光灯调节
+		{autoAngleMainLightsStatus_ENCODE, "autoAngleMainLightsStatus"},					   // 自动灯光切换按钮
+		{autoAngleMainLightsValueInDegrees_ENCODE, "autoAngleMainLightsValueInDegrees"},	   // 近光灯控制
+		{cableReelPower_ENCODE, "cableReelPower"},											   // 自动模式，线缆盘张力控制
+		{cableReelSpeed_ENCODE, "cableReelSpeed"},											   // 手动模式，线缆盘速度控制
+		{cableReelType_ENCODE, "cableReelType"},											   // 手动模式自动模式切换按钮
+		{cruiseControlStatus_ENCODE, "cruiseControlStatus"},								   // 开启/关闭定速巡航
+		{cruiseControlValue_ENCODE, "cruiseControlValue"},									   // 设置定速巡航速度值
+		{focusType_ENCODE, "focusType"},													   // 切换手动模式和自动模式
+		{clutchStatus_ENCODE, "clutchStatus"},												   // 右侧离合器开关
+		{cameraChosen_ENCODE, "cameraChosen"},												   // 前置摄像头切换为后置摄像头
+		{rearCameraIdx_ENCODE, "rearCameraIdx"},											   // 切换第二个后置摄像头
+		{autoHighBeamMainLightsValueInPercent_ENCODE, "autoHighBeamMainLightsValueInPercent"}, // 切换第二个后置摄像头
 };
 
 /**
@@ -1120,7 +1120,6 @@ static void START_VIDEO_STREAMING_RESP_ENCODE(cJSON *STR_Payload) // 开机回�
 #endif
 }
 
-
 /**
  * @description  : APPLICATION_CLOSED_ENCODE
  * @param         {cJSON*} STR_Payload:"payload":{"ip":"192.168.16.100"}
@@ -1143,12 +1142,12 @@ static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 开机回复
 JsonDecode_task_t JsonDecode_tasks[] = // 从上往下代表优先级
 	{
 
-		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"}, // 开关机
-		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"}, 					 // Full stop		
-		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},						 // UPDATE_VALUE
-		{ACTION_ENCODE, "ACTION"},						 		 	 // ACTION
-		{START_VIDEO_STREAMING_RESP_ENCODE, "START_VIDEO_STREAMING_RESP"},				 // 开机回复
-		{APPLICATION_CLOSED_ENCODE, "APPLICATION_CLOSED"},				 // 开机回复		
+		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"},	   // 开关机
+		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"},						   // Full stop
+		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},							   // UPDATE_VALUE
+		{ACTION_ENCODE, "ACTION"},										   // ACTION
+		{START_VIDEO_STREAMING_RESP_ENCODE, "START_VIDEO_STREAMING_RESP"}, // 开机回复
+		{APPLICATION_CLOSED_ENCODE, "APPLICATION_CLOSED"},				   // 开机回复
 
 };
 
@@ -1252,7 +1251,6 @@ void CANToWIFIDecode(CanRxMsg *rxMessage, uint8_t *CANToWIFIRECBuff)
 	}
 }
 
-
 /**
  * @description  : CMSG_LIFTPOSITION_ELEVATOR编码，升降架高度和百分比显示
  * @return        {*}
@@ -1274,7 +1272,7 @@ void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
 	cjson_can = cJSON_CreateObject();
 
 	cjson_header = cJSON_CreateObject();
-	cJSON_AddStringToObject(cjson_header, "messageType", "IPEK_CHINA_GUI");	
+	cJSON_AddStringToObject(cjson_header, "messageType", "IPEK_CHINA_GUI");
 	cJSON_AddStringToObject(cjson_header, "messageName", "UPDATE_VALUE");
 
 	cJSON_AddItemToObject(cjson_can, "header", cjson_header);
@@ -1322,8 +1320,6 @@ void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
 	cJSON_Delete(cjson_can); // 释放内存
 	cJSON_free(TCPSendBuff);
 }
-
-
 
 /**
  * @description  : CMSG_METERCNT1VALUE编码，左侧米计数器功能（待确定）
