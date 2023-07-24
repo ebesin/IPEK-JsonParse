@@ -272,6 +272,7 @@ void listenAndForward()
 #endif
             pthread_cancel(t_start_up);
             pthread_cancel(t_start_video_streaming);
+            finished_video_streaming = 0;
             close(my_tcp_sock);
             sleep(1);
             connectToHost();
