@@ -85,7 +85,6 @@ uint8_t CanSendMsg(CantxMsg *txMessage)
   }
 }
 
-
 //=============================================================================
 void SendClutchOpen(CHAR cOnOff)
 {
@@ -421,5 +420,14 @@ void SendAutoHighBeamMainLightsValueInPercentEvent(UCHAR ucVal)
   CanTMsg.MsgID = CMSG_CAMERALIGHT;
   CanTMsg.DataLength = 1;
   CanTMsg.Data.c[0] = ucVal;
+  CanSendMsg(&CanTMsg);
+}
+
+//=============================================================================
+void SendChangeMeterCounterValueEvent(float fValue)
+{
+  CanTMsg.MsgID = CMSG_SETMETERCNT1VALUE_CTRLINT;
+  CanTMsg.DataLength = 4;
+  CanTMsg.Data.f[0] = fValue;
   CanSendMsg(&CanTMsg);
 }
