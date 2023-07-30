@@ -783,10 +783,11 @@ typedef struct
                         to 0xFF. */
 } CanTxMsg;
 
-typedef struct
+typedef union
 {
 
   uint8_t c[8];
+  float f[2];
 
 } data;
 
@@ -856,5 +857,5 @@ extern void SendClutch(CHAR cOnOff);
 extern void SendClutchOpen(CHAR cOnOff);
 extern void SendBackViewCameraSwitchEvent(UCHAR ucVal);
 extern void SendAutoHighBeamMainLightsValueInPercentEvent(UCHAR ucVal);
-extern void SendChangeMeterCounterValueEvent(UCHAR uVal1, UCHAR uVal2, UCHAR uVal3, UCHAR uVal4);
+extern void SendChangeMeterCounterValueEvent(float fVal);
 #endif

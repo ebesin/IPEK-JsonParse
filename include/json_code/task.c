@@ -1141,9 +1141,7 @@ static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 开机回复
 static void CHANGE_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 改变参考数值 section_countmeter
 {
 	double section_countmeter_value = cJSON_GetObjectItem(STR_Payload, "value")->valuedouble;
-	DataToFloat dataToFloat;
-	dataToFloat.value = (float)section_countmeter_value;
-	SendChangeMeterCounterValueEvent(dataToFloat.data[0], dataToFloat.data[1], dataToFloat.data[2], dataToFloat.data[3]);
+	SendChangeMeterCounterValueEvent((float)section_countmeter_value);
 #if DEBUG
 	printf("CHANGE_METER_COUNTER_VALUE_REQ_ENCODE\r\n");
 #endif

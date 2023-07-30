@@ -424,13 +424,10 @@ void SendAutoHighBeamMainLightsValueInPercentEvent(UCHAR ucVal)
 }
 
 //=============================================================================
-void SendChangeMeterCounterValueEvent(UCHAR uVal1, UCHAR uVal2, UCHAR uVal3, UCHAR uVal4)
+void SendChangeMeterCounterValueEvent(float fValue)
 {
   CanTMsg.MsgID = CMSG_SETMETERCNT1VALUE_CTRLINT;
   CanTMsg.DataLength = 4;
-  CanTMsg.Data.c[0] = uVal1;
-  CanTMsg.Data.c[1] = uVal2;
-  CanTMsg.Data.c[2] = uVal3;
-  CanTMsg.Data.c[3] = uVal4;
+  CanTMsg.Data.f[0] = fValue;
   CanSendMsg(&CanTMsg);
 }
