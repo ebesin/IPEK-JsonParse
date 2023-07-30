@@ -1134,6 +1134,22 @@ static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 开机回复
 }
 
 /**
+ * @description  : CHANGE_METER_COUNTER_VALUE_REQ
+ * @param         {cJSON*} STR_Payload:"payload":{"unit":"m","value":7}
+ * @return        {*}
+ */
+static void CHANGE_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 改变参考数值 section_countmeter
+{
+	double section_countmeter_value = cJSON_GetObjectItem(STR_Payload, "value")->valuedouble;
+	DataToFloat dataToFloat;
+	dataToFloat.value = (float)section_countmeter_value;
+	SendChangeMeterCounterValueEvent(dataToFloat.data[0], dataToFloat.data[1], dataToFloat.data[2], dataToFloat.data[3]);
+#if DEBUG
+	printf("CHANGE_METER_COUNTER_VALUE_REQ_ENCODE\r\n");
+#endif
+}
+
+/**
  * @description  : 结构体数组，一级指令，根据messageName值做一级判断
  * @param        void(*decode_func)(cJSON* STR_Payload)：相应控制指令的函数指针
  *				 messageName[30]：指令名称
@@ -1142,12 +1158,13 @@ static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 开机回复
 JsonDecode_task_t JsonDecode_tasks[] = // 从上往下代表优先级
 	{
 
-		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"},	   // 开关机
-		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"},						   // Full stop
-		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},							   // UPDATE_VALUE
-		{ACTION_ENCODE, "ACTION"},										   // ACTION
-		{START_VIDEO_STREAMING_RESP_ENCODE, "START_VIDEO_STREAMING_RESP"}, // 开机回复
-		{APPLICATION_CLOSED_ENCODE, "APPLICATION_CLOSED"},				   // 开机回复
+		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"},			   // 开关机
+		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"},								   // Full stop
+		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},									   // UPDATE_VALUE
+		{ACTION_ENCODE, "ACTION"},												   // ACTION
+		{START_VIDEO_STREAMING_RESP_ENCODE, "START_VIDEO_STREAMING_RESP"},		   // 开机回复
+		{APPLICATION_CLOSED_ENCODE, "APPLICATION_CLOSED"},						   // 开机回复
+		{CHANGE_METER_COUNTER_VALUE_REQ_ENCODE, "CHANGE_METER_COUNTER_VALUE_REQ"}, // 改变参考数值 section_countmeter
 
 };
 
@@ -1261,13 +1278,15 @@ void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
 	cJSON *cjson_header = NULL;
 	cJSON *cjson_payload = NULL;
 	char *TCPSendBuff = NULL;
-	DataTouInt16_t datatoint16;
+	// DataTouInt16_t datatoint16;
+	DataToInt16_t datatoint16;
 	char scvalue;
 	for (uint8_t i = 0; i < 2; i++)
 	{
 		datatoint16.data[i] = RxMessage.Data[i];
 	}
 	scvalue = RxMessage.Data[5];
+	scvalue = scvalue >= 0 && scvalue <= 100 && datatoint16.value >= 0 ? scvalue : 0;
 
 	cjson_can = cJSON_CreateObject();
 
@@ -1304,7 +1323,7 @@ void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
 	sendToApp(TCPSendBuff);
 
 	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("elevatorValueInMm"));
-	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatoint16.value));
+	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatoint16.value >= 0 ? datatoint16.value : 0));
 
 	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
 	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
@@ -1510,7 +1529,7 @@ void CMSG_INCLINATIONXDEG_CODE(void)
 	sendToApp(TCPSendBuff);
 
 	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("crawlerAngleInDegrees"));
-	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatofloat.value));
+	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatofloat.value * -1));
 
 	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
 	TCPSendBuff = realloc(TCPSendBuff, strlen(TCPSendBuff) + 2);
@@ -1627,10 +1646,9 @@ void CMSG_CLUTCHSTATE_CODE(void)
 	cJSON_free(TCPSendBuff);
 }
 
-
 void NODEID_SEND_CODE(void)
 {
-	if((RxMessage.Data[0]==0x03)&&(RxMessage.Data[7]==0x03)&&(RxMessage.Data[4]==0x7B))
+	if ((RxMessage.Data[0] == 0x03) && (RxMessage.Data[7] == 0x03) && (RxMessage.Data[4] == 0x7B))
 	{
 		cJSON *cjson_can = NULL;
 		cJSON *cjson_header = NULL;
@@ -1658,11 +1676,11 @@ void NODEID_SEND_CODE(void)
 		char *enter = "\n\0";
 		strncat(TCPSendBuff, enter, 2);
 		CAN_Cnt = strlen(TCPSendBuff);
-	#if DEBUG
+#if DEBUG
 		printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
 
 		printf("TCPSendBuff:%s \r\n", TCPSendBuff);
-	#endif
+#endif
 		/*-----------------
 		-------------------
 		-------------------发送函数请放这（发送TCPSendBuff）
@@ -1674,7 +1692,6 @@ void NODEID_SEND_CODE(void)
 		cJSON_free(TCPSendBuff);
 	}
 }
-
 
 /**
  * @description  : CAN→TCP 		使用void Scheduler_Code(void)		此函数在can.c中的void CAN_RX_IRQHandler(void)接收中断调用，
@@ -1695,60 +1712,60 @@ void Scheduler_Code(uint8_t *CANToWiFiRecBuff)
 	else
 		CANID = RxMessage.ExtId;
 #if DEBUG
-	printf("CANID:%x \r\n",CANID);
+	printf("CANID:%x \r\n", CANID);
 #endif
 	// 接收成功
 	MESSAGEID++;
 	switch (CANID)
 	{
-		case nodeID:
-		{
-			NODEID_SEND_CODE();
+	case nodeID:
+	{
+		NODEID_SEND_CODE();
 
-			break;
-		}
-		case CMSG_METERCNT1VALUE:
-		{
-			CMSG_METERCNT1VALUE_CODE();
+		break;
+	}
+	case CMSG_METERCNT1VALUE:
+	{
+		CMSG_METERCNT1VALUE_CODE();
 
-			break;
-		}
-		case CMSG_ROVVERPRESSURE:
-		{
-			CMSG_ROVVERPRESSURE_CODE();
+		break;
+	}
+	case CMSG_ROVVERPRESSURE:
+	{
+		CMSG_ROVVERPRESSURE_CODE();
 
-			break;
-		}
-		case CMSG_ROVVERTEMP:
-		{
-			CMSG_ROVVERTEMP_CODE();
+		break;
+	}
+	case CMSG_ROVVERTEMP:
+	{
+		CMSG_ROVVERTEMP_CODE();
 
-			break;
-		}
-		case CMSG_INCLINATIONXDEG:
-		{
-			CMSG_INCLINATIONXDEG_CODE();
-			break;
-		}
-		case CMSG_CLUTCHSTATE:
-		{
-			CMSG_CLUTCHSTATE_CODE();
-			break;
-		}
-		case CMSG_LIFTPOSITION_ELEVATOR:
-		{
-			CMSG_LIFTPOSITION_ELEVATOR_CODE();
-			break;
-		}
-		default:
-		{
+		break;
+	}
+	case CMSG_INCLINATIONXDEG:
+	{
+		CMSG_INCLINATIONXDEG_CODE();
+		break;
+	}
+	case CMSG_CLUTCHSTATE:
+	{
+		CMSG_CLUTCHSTATE_CODE();
+		break;
+	}
+	case CMSG_LIFTPOSITION_ELEVATOR:
+	{
+		CMSG_LIFTPOSITION_ELEVATOR_CODE();
+		break;
+	}
+	default:
+	{
 
-	#if DEBUG
-			// printf("CAN指令错误\r\n");
-	#endif
-			MESSAGEID--;
-			break;
-		}
+#if DEBUG
+		// printf("CAN指令错误\r\n");
+#endif
+		MESSAGEID--;
+		break;
+	}
 	}
 
 	//			USART3_DMA_TxConfig((u32*)UDPSendBuff,CAN_Cnt);

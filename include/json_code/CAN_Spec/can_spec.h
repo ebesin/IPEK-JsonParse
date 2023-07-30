@@ -851,9 +851,10 @@ extern void SendCameraZoomEvent(SCHAR scV);
 extern void SetManualFocus(void);
 extern void SetAutoFocus(void);
 extern void SendFastFocusEvent(SCHAR scV1);
-extern void SendLiftSpeedValue (SCHAR scLiftSpeed);
+extern void SendLiftSpeedValue(SCHAR scLiftSpeed);
 extern void SendClutch(CHAR cOnOff);
 extern void SendClutchOpen(CHAR cOnOff);
 extern void SendBackViewCameraSwitchEvent(UCHAR ucVal);
 extern void SendAutoHighBeamMainLightsValueInPercentEvent(UCHAR ucVal);
+extern void SendChangeMeterCounterValueEvent(UCHAR uVal1, UCHAR uVal2, UCHAR uVal3, UCHAR uVal4);
 #endif
