@@ -783,10 +783,11 @@ typedef struct
                         to 0xFF. */
 } CanTxMsg;
 
-typedef struct
+typedef union
 {
 
   uint8_t c[8];
+  float f[2];
 
 } data;
 
@@ -851,9 +852,10 @@ extern void SendCameraZoomEvent(SCHAR scV);
 extern void SetManualFocus(void);
 extern void SetAutoFocus(void);
 extern void SendFastFocusEvent(SCHAR scV1);
-extern void SendLiftSpeedValue (SCHAR scLiftSpeed);
+extern void SendLiftSpeedValue(SCHAR scLiftSpeed);
 extern void SendClutch(CHAR cOnOff);
 extern void SendClutchOpen(CHAR cOnOff);
 extern void SendBackViewCameraSwitchEvent(UCHAR ucVal);
 extern void SendAutoHighBeamMainLightsValueInPercentEvent(UCHAR ucVal);
+extern void SendChangeMeterCounterValueEvent(float fVal);
 #endif
