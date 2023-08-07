@@ -17,7 +17,8 @@
 float CAN_cntmeter = 0.0f;
 float total_diff = 0.0f;
 float section_diff = 0.0f;
-uint8_t flag_cruise = 0;
+uint8_t cruise_flag = 0;
+uint8_t cntmeter_flag = 1;//初始值为1，用于判断是否可以设置全局和区域计米器数值
 /**
  * @description  : 小车遥感换算函数，0-360
  * @param         {SCHAR*} scV1:速度scV1
@@ -202,6 +203,11 @@ static void roverJoystick_ENCODE(cJSON *STR_Payload) // 右侧操纵杆（控制
 #if DEBUG
 	printf("angle:%.2f  power:%.2f scV1:%d scV2:%d\r\n", str_payload_angle, str_payload_power, str_payload_scV1, str_payload_scV2);
 #endif
+	if((str_payload_scV1 != 0 )&&(str_payload_scV2 != 0))
+	cntmeter_flag = 0;
+	else
+	cntmeter_flag = 1;
+
 	SendCrawlerSpeedValue(str_payload_scV1, str_payload_scV2, 0);
 
 #if DEBUG
@@ -446,6 +452,7 @@ static void cableReelType_ENCODE(cJSON *STR_Payload) // 手动模式自动模式
 	{
 		SendReelFunctionCodeEvent(1);
 		SendFullStop();
+		cntmeter_flag = 1;
 	}
 #if DEBUG
 	printf("cableReelType_ENCODE\r\n");
@@ -492,13 +499,13 @@ static void cruiseControlStatus_ENCODE(cJSON *STR_Payload) // 开启/关闭定�
 	if (str_payload_value) //
 	{
 		SendCrawlerSpeedValue(0, 0, 1);
-		flag_cruise = 1;
+		cruise_flag = 1;
 	}
 
 	else
 	{
 		SendCrawlerSpeedValue(0, 0, 0);
-		flag_cruise = 0; 
+		cruise_flag = 0; 
 	}
 
 #if DEBUG
@@ -517,7 +524,10 @@ static void cruiseControlValue_ENCODE(cJSON *STR_Payload) // 设置定速巡航�
 {
 
 	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
-
+	if(str_payload_value == 0)
+	cntmeter_flag = 1;
+	else
+	cntmeter_flag = 0;
 	SendCrawlerSpeedValue(str_payload_value, str_payload_value, 1);
 #if DEBUG
 	printf("cruiseControlValue_ENCODE\r\n");
@@ -1115,6 +1125,7 @@ static void ACTION_ENCODE(cJSON *STR_Payload) // action
 static void EMERGENCY_STOP_ENCODE(cJSON *STR_Payload) // 'reset' 摄像头恢复正常
 {
 	SendFullStop();
+	cntmeter_flag = 1;
 #if DEBUG
 	printf("EMERGENCY_STOP_ENCODE\r\n");
 #endif
@@ -1139,12 +1150,13 @@ static void START_VIDEO_STREAMING_RESP_ENCODE(cJSON *STR_Payload) // 开机回�
  * @param         {cJSON*} STR_Payload:"payload":{"ip":"192.168.16.100"}
  * @return        {*}
  */
-static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 开机回复
+static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 关机
 {
 	Shutdown_CMD();
 	CAN_cntmeter = 0.0f;
 	total_diff = 0.0f;
 	section_diff = 0.0f;
+	cntmeter_flag = 1;
 #if DEBUG
 	printf("APPLICATION_CLOSED_ENCODE\r\n");
 #endif
@@ -1158,7 +1170,20 @@ static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 开机回复
 static void CHANGE_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 改变参考数值 section_countmeter
 {
 	double section_countmeter_value = cJSON_GetObjectItem(STR_Payload, "value")->valuedouble;
-	section_diff = section_countmeter_value - CAN_cntmeter;
+	if(cntmeter_flag)
+	{
+		section_diff = section_countmeter_value - CAN_cntmeter;
+		#if DEBUG
+			printf("设置成功\r\n");
+		#endif
+	}
+	else
+	{
+		#if DEBUG
+			printf("设置失败\r\n");
+		#endif		
+	}
+
 
 #if DEBUG
 	printf("CHANGE_METER_COUNTER_VALUE_REQ_ENCODE\r\n");
@@ -1173,6 +1198,7 @@ static void CHANGE_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 改变�
 static void CHANGE_TOTAL_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 改变参考数值 section_countmeter
 {
 	double section_countmeter_value = cJSON_GetObjectItem(STR_Payload, "value")->valuedouble;
+	if(cntmeter_flag)
 	total_diff = section_countmeter_value - CAN_cntmeter;
 #if DEBUG
 	printf("CHANGE_TOTAL_METER_COUNTER_VALUE_REQ_ENCODE\r\n");
@@ -1554,7 +1580,7 @@ void CMSG_INCLINATIONXDEG_CODE(void)
 	else if ((scState == 01) || (scState == 02))
 	{
 		cJSON_AddStringToObject(cjson_payload, "value", "critical");
-		if(flag_cruise == 1)
+		if(cruise_flag == 1)
 		{
 			SendCrawlerSpeedValue(0,0,0);
 		}
@@ -1598,9 +1624,9 @@ void CMSG_INCLINATIONXDEG_CODE(void)
 
 
 
-	if(((scState == 01) || (scState == 02)) && (flag_cruise == 1))
+	if(((scState == 01) || (scState == 02)) && (cruise_flag == 1))
 	{
-		flag_cruise = 0;
+		cruise_flag = 0;
 		cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("cruiseControlStatus"));
 		cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateBool(0));
 		TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
