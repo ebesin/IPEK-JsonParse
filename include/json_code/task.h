@@ -44,7 +44,7 @@ extern char *TCPSendBuff;
 extern uint32_t rec_cnt;
 extern uint32_t rec_err_cnt;
 extern float err_rate;
-
+extern float CAN_cntmeter,total_diff,section_diff;
 /**
  * @description  : Json编码、解码相关函�?
  */
