@@ -1397,6 +1397,11 @@ void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
 	cJSON_free(TCPSendBuff);
 }
 
+// void FloatToString(float Nub,char *NubStr)
+// {
+// 	sprintf(NubStr, "%.2f", Nub);
+// }
+
 /**
  * @description  : CMSG_METERCNT1VALUE编码，左侧米计数器功能（待确定）
  * @return        {*}
@@ -1407,6 +1412,7 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	cJSON *cjson_header = NULL;
 	cJSON *cjson_payload = NULL;
 	char *TCPSendBuff = NULL;
+	// char NubStrBuff[32] ;
 	DataToFloat datatofloat;
 	int vaule = 0;
 	float vaule_f = 0.0f;
@@ -1414,10 +1420,12 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	{
 		datatofloat.data[i] = RxMessage.Data[i];
 	}
-	vaule = (datatofloat.value * 100 + 0.5f);
-	CAN_cntmeter = vaule / 100.0f;
-
+	// vaule = (datatofloat.value * 100 + 0.5f);
+	// CAN_cntmeter = vaule / 100.0f;
+	CAN_cntmeter = datatofloat.value;
 	vaule_f = CAN_cntmeter + section_diff;
+//	cJSON_SetNumberHelper(&vaule_f, 18);
+	// FloatToString(vaule_f,NubStrBuff);
 	cjson_can = cJSON_CreateObject();
 
 	cjson_header = cJSON_CreateObject();
@@ -1438,9 +1446,10 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	strncat(TCPSendBuff, enter, 2);
 	CAN_Cnt = strlen(TCPSendBuff);
 #if DEBUG
+	printf("vaule_f:%f, CAN_cntmeter:%f, section_diff:%f\r\n", vaule_f,CAN_cntmeter,section_diff);
 	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
-
 	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+	// printf("NubStrBuff:%s \r\n", NubStrBuff);
 #endif
 	/*-----------------
 	-------------------
