@@ -8,6 +8,9 @@
  *
  * Copyright (c) 2023 by iPEK, All Rights Reserved.
  */
+#include <time.h>
+#include <sys/time.h>
+#include <memory.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -19,6 +22,14 @@ float total_diff = 0.0f;
 float section_diff = 0.0f;
 uint8_t cruise_flag = 0;
 uint8_t cntmeter_flag = 1;//初始值为1，用于判断是否可以设置全局和区域计米器数值
+unsigned long GetTickCount(void)
+{
+    struct timespec ts;
+
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    return (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+}
 /**
  * @description  : 小车遥感换算函数，0-360
  * @param         {SCHAR*} scV1:速度scV1
@@ -203,10 +214,10 @@ static void roverJoystick_ENCODE(cJSON *STR_Payload) // 右侧操纵杆（控制
 #if DEBUG
 	printf("angle:%.2f  power:%.2f scV1:%d scV2:%d\r\n", str_payload_angle, str_payload_power, str_payload_scV1, str_payload_scV2);
 #endif
-	if((str_payload_scV1 != 0 )&&(str_payload_scV2 != 0))
-	cntmeter_flag = 0;
-	else
-	cntmeter_flag = 1;
+	// if((str_payload_scV1 != 0 )&&(str_payload_scV2 != 0))
+	// cntmeter_flag = 0;
+	// else
+	// cntmeter_flag = 1;
 
 	SendCrawlerSpeedValue(str_payload_scV1, str_payload_scV2, 0);
 
@@ -452,7 +463,7 @@ static void cableReelType_ENCODE(cJSON *STR_Payload) // 手动模式自动模式
 	{
 		SendReelFunctionCodeEvent(1);
 		SendFullStop();
-		cntmeter_flag = 1;
+		// cntmeter_flag = 1;
 	}
 #if DEBUG
 	printf("cableReelType_ENCODE\r\n");
@@ -524,10 +535,10 @@ static void cruiseControlValue_ENCODE(cJSON *STR_Payload) // 设置定速巡航�
 {
 
 	int str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valueint;
-	if(str_payload_value == 0)
-	cntmeter_flag = 1;
-	else
-	cntmeter_flag = 0;
+	// if(str_payload_value == 0)
+	// cntmeter_flag = 1;
+	// else
+	// cntmeter_flag = 0;
 	SendCrawlerSpeedValue(str_payload_value, str_payload_value, 1);
 #if DEBUG
 	printf("cruiseControlValue_ENCODE\r\n");
@@ -1125,7 +1136,7 @@ static void ACTION_ENCODE(cJSON *STR_Payload) // action
 static void EMERGENCY_STOP_ENCODE(cJSON *STR_Payload) // 'reset' 摄像头恢复正常
 {
 	SendFullStop();
-	cntmeter_flag = 1;
+	// cntmeter_flag = 1;
 #if DEBUG
 	printf("EMERGENCY_STOP_ENCODE\r\n");
 #endif
@@ -1156,7 +1167,7 @@ static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 关机
 	CAN_cntmeter = 0.0f;
 	total_diff = 0.0f;
 	section_diff = 0.0f;
-	cntmeter_flag = 1;
+	// cntmeter_flag = 1;
 #if DEBUG
 	printf("APPLICATION_CLOSED_ENCODE\r\n");
 #endif
@@ -1167,20 +1178,24 @@ static void APPLICATION_CLOSED_ENCODE(cJSON *STR_Payload) // 关机
  * @param         {cJSON*} STR_Payload:"payload":{"unit":"m","value":7}
  * @return        {*}
  */
+unsigned int SetTime = 0;
+unsigned int RecTime = 0;
 static void CHANGE_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 改变参考数值 section_countmeter
 {
 	double section_countmeter_value = cJSON_GetObjectItem(STR_Payload, "value")->valuedouble;
+	SetTime = GetTickCount();
+	cntmeter_flag = (SetTime - RecTime)>500 ? 1 : 0;
 	if(cntmeter_flag)
 	{
 		section_diff = section_countmeter_value - CAN_cntmeter;
 		#if DEBUG
-			printf("设置成功\r\n");
+			printf("设置成功,section_diff:%f\r\n",section_diff);
 		#endif
 	}
 	else
 	{
 		#if DEBUG
-			printf("设置失败\r\n");
+			printf("设置失败,section_diff:%f\r\n",section_diff);
 		#endif		
 	}
 
@@ -1198,8 +1213,21 @@ static void CHANGE_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 改变�
 static void CHANGE_TOTAL_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 改变参考数值 section_countmeter
 {
 	double section_countmeter_value = cJSON_GetObjectItem(STR_Payload, "value")->valuedouble;
+	SetTime = GetTickCount();
+	cntmeter_flag = (SetTime - RecTime)>500 ? 1 : 0;
 	if(cntmeter_flag)
-	total_diff = section_countmeter_value - CAN_cntmeter;
+	{
+		total_diff = section_countmeter_value - CAN_cntmeter;
+		#if DEBUG
+			printf("设置成功,total_diff:%f\r\n",total_diff);
+		#endif
+	}
+	else
+	{
+		#if DEBUG
+			printf("设置失败,total_diff:%f\r\n",total_diff);
+		#endif		
+	}
 #if DEBUG
 	printf("CHANGE_TOTAL_METER_COUNTER_VALUE_REQ_ENCODE\r\n");
 #endif
@@ -1397,10 +1425,17 @@ void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
 	cJSON_free(TCPSendBuff);
 }
 
-// void FloatToString(float Nub,char *NubStr)
+// float FloatToString(float Nub)
 // {
-// 	sprintf(NubStr, "%.2f", Nub);
+// 	char NubStrBuff[32];
+// 	char* NubStrBuff1;
+// 	float NubFloat;
+// 	sprintf(NubStrBuff, "%.2f", Nub);
+// 	NubFloat = strtof(NubStrBuff,&NubStrBuff1);
+// 	// cJSON_free(NubStrBuff1);
+// 	return NubFloat;
 // }
+
 
 /**
  * @description  : CMSG_METERCNT1VALUE编码，左侧米计数器功能（待确定）
@@ -1412,20 +1447,15 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	cJSON *cjson_header = NULL;
 	cJSON *cjson_payload = NULL;
 	char *TCPSendBuff = NULL;
-	// char NubStrBuff[32] ;
 	DataToFloat datatofloat;
-	int vaule = 0;
 	float vaule_f = 0.0f;
 	for (uint8_t i = 0; i < RxMessage.DLC; i++)
 	{
 		datatofloat.data[i] = RxMessage.Data[i];
 	}
-	// vaule = (datatofloat.value * 100 + 0.5f);
-	// CAN_cntmeter = vaule / 100.0f;
 	CAN_cntmeter = datatofloat.value;
 	vaule_f = CAN_cntmeter + section_diff;
-//	cJSON_SetNumberHelper(&vaule_f, 18);
-	// FloatToString(vaule_f,NubStrBuff);
+
 	cjson_can = cJSON_CreateObject();
 
 	cjson_header = cJSON_CreateObject();
@@ -1445,10 +1475,12 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	char *enter = "\n\0";
 	strncat(TCPSendBuff, enter, 2);
 	CAN_Cnt = strlen(TCPSendBuff);
+	RecTime = GetTickCount();
 #if DEBUG
-	printf("vaule_f:%f, CAN_cntmeter:%f, section_diff:%f\r\n", vaule_f,CAN_cntmeter,section_diff);
+	printf("RecTime:%d, vaule_f:%f, CAN_cntmeter:%f, section_diff:%f, total_diff:%f\r\n", RecTime,vaule_f,CAN_cntmeter,section_diff,total_diff);
 	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
 	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
+
 	// printf("NubStrBuff:%s \r\n", NubStrBuff);
 #endif
 	/*-----------------
@@ -1460,6 +1492,7 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	sendToApp(TCPSendBuff);
 	
 	vaule_f = CAN_cntmeter + total_diff;
+	// vaule = FloatToString(vaule_f);
 	cJSON_ReplaceItemInObject(cjson_header, "messageName", cJSON_CreateString("TOTAL_METER_COUNTER_STATUS_IND"));
 	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(vaule_f));
 

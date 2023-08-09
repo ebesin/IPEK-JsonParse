@@ -1,6 +1,13 @@
 {
     "files.associations": {
         "type_traits": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "can_spec.h": "c",
+        "array": "c",
+        "*.tcc": "c",
+        "memory": "c",
+        "istream": "c",
+        "tuple": "c",
+        "utility": "c"
     }
 }

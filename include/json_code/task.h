@@ -53,4 +53,6 @@ extern void Scheduler_Code(uint8_t *CANToWiFiRecBuff); // MCU To Pad 调用
 extern void RockerConversion(SCHAR *scV1, SCHAR *scV2, double angle, double power);
 extern void StartUp(void);
 extern void ShutDown(void);
+extern int getCurrentTimeSMs(void);
+extern unsigned long GetTickCount(void);
 #endif
