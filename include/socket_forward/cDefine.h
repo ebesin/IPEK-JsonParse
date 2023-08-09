@@ -16,10 +16,12 @@
 #define DEST_TCP_PORT 8095  // �?标tcp�?口号
 #define MY_UDP_PORT 10010   // �?地udp�?口号
 #define DEST_UDP_PORT 10000 // �?标udp�?口号
+#define DEBUG_UDP_PORT 9999 // 调试信息udp端口
 
-#define MY_HOST "192.168.16.254"     // �?地ip
-#define DEST_UDP_IP "192.168.16.10"  // udp�?标ip
-#define DEST_TCP_IP "192.168.16.100" // tcp�?标ip
+#define MY_HOST "192.168.16.254"           // �?地ip
+#define DEST_UDP_IP "192.168.16.10"        // udp�?标ip
+#define DEST_TCP_IP "192.168.16.100"       // tcp�?标ip
+#define DEST_DEBUG_UDP_IP "192.168.16.100" // tcp�?标ip
 
 #define UDP_SEND_FREQUENCY 100; // udp发送最大�?�率(Hz)
 #define TCP_SEND_FREQUENCY 500; // tcp发送最大�?�率(Hz)

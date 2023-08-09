@@ -17,6 +17,8 @@
 int my_udp_sock = -1;
 // tcp句柄
 int my_tcp_sock = -1;
+// 调试udp句柄
+int debug_udp_sock = -1;
 // 本地udp套接字
 struct sockaddr_in my_udp_sock_addr;
 // 目标udp套接字
@@ -25,6 +27,8 @@ struct sockaddr_in dest_udp_sock_addr;
 struct sockaddr_in my_tcp_sock_addr;
 // 目标udp套接字
 struct sockaddr_in dest_tcp_sock_addr;
+// 调试信息发送套接字
+struct sockaddr_in dest_debug_info_udp_sock_addr;
 // tcp信息
 struct tcp_info info;
 int finished_start_up = 0;
@@ -33,10 +37,14 @@ int finished_video_streaming = 0;
 CircleQueue tcp_send_queue;
 // udp发送队列
 CircleQueue udp_send_queue;
+// udp发送队列
+CircleQueue debug_udp_send_queue;
 // udp线程标识符
 pthread_t t_udp;
 // tcp线程标识符
 pthread_t t_tcp;
+// 调试udp线程标识符
+pthread_t t_debug_udp;
 // 开机过程线程标识符
 pthread_t t_start_up;
 // 开启视频流发送线程标识符
@@ -45,6 +53,20 @@ pthread_t t_start_video_streaming;
 pthread_mutex_t udp_mutex = PTHREAD_MUTEX_INITIALIZER;
 // tcp互斥锁
 pthread_mutex_t tcp_mutex = PTHREAD_MUTEX_INITIALIZER;
+// 调试互斥锁
+pthread_mutex_t debug_udp_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#define SEND_DEBUG_INFO(fmt, ...)                                  \
+    {                                                              \
+        char debug_info[200];                                      \
+        SocketData socket_data;                                    \
+        socket_data.len = sprintf(debug_info, fmt, ##__VA_ARGS__); \
+        for (int i = 0; i < socket_data.len; i++)                  \
+            socket_data.data[i] = debug_info[i];                   \
+        pthread_mutex_lock(&debug_udp_mutex);                      \
+        enQueue(&debug_udp_send_queue, &socket_data);              \
+        pthread_mutex_unlock(&debug_udp_mutex);                    \
+    }
 
 void initUDP(int *udp_sock, struct sockaddr_in *my_udp_sock_addr, struct sockaddr_in *dest_udp_sock_addr)
 {
@@ -61,6 +83,7 @@ void initUDP(int *udp_sock, struct sockaddr_in *my_udp_sock_addr, struct sockadd
     if (bind(*udp_sock, (struct sockaddr *)my_udp_sock_addr, sizeof(*my_udp_sock_addr)) < 0)
     {
         perror("Error:bindudp");
+        SEND_DEBUG_INFO("strerror-->Error:create udp socket:%s", strerror(errno))
         exit(1);
     }
     // 绑定目标udp套接字
@@ -70,6 +93,16 @@ void initUDP(int *udp_sock, struct sockaddr_in *my_udp_sock_addr, struct sockadd
     dest_udp_sock_addr->sin_port = htons(DEST_UDP_PORT);
 }
 
+void initDebugUDP(int *udp_sock, struct sockaddr_in *dest_udp_sock_addr)
+{
+    if ((*udp_sock = socket(PF_INET, SOCK_DGRAM, 0)) < 0)
+        exit(1);
+    socklen_t len = sizeof(*dest_udp_sock_addr);
+    dest_udp_sock_addr->sin_family = AF_INET;
+    dest_udp_sock_addr->sin_addr.s_addr = inet_addr(DEST_DEBUG_UDP_IP);
+    dest_udp_sock_addr->sin_port = htons(DEBUG_UDP_PORT);
+}
+
 void initTCP(int *tcp_sock, struct sockaddr_in *my_tcp_addr, struct sockaddr_in *dest_tcp_addr)
 {
     close(*tcp_sock);
@@ -77,6 +110,7 @@ void initTCP(int *tcp_sock, struct sockaddr_in *my_tcp_addr, struct sockaddr_in 
     if ((*tcp_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         perror("Error:socket");
+        SEND_DEBUG_INFO("strerror-->Error:create tcp sock:%s", strerror(errno))
         exit(1);
     }
     int opt = 1;
@@ -92,6 +126,7 @@ void initTCP(int *tcp_sock, struct sockaddr_in *my_tcp_addr, struct sockaddr_in 
     if (bind(*tcp_sock, (struct sockaddr *)my_tcp_addr, sizeof(*my_tcp_addr)) < 0)
     {
         perror("Error:bindtcp");
+        SEND_DEBUG_INFO("strerror-->Error:bindtcp:%s", strerror(errno))
         exit(1);
     }
 
@@ -162,7 +197,6 @@ void *tcp_send_thread(void *args)
 {
 
     int interval = 1000 * 1000 / UDP_SEND_FREQUENCY;
-    printf("interval:%d\n", interval);
     while (1)
     {
         if (!queueEmpty(&tcp_send_queue))
@@ -172,6 +206,24 @@ void *tcp_send_thread(void *args)
             deQueue(&tcp_send_queue, &send_data);
             pthread_mutex_unlock(&tcp_mutex);
             send(my_tcp_sock, send_data.data, send_data.len, 0);
+        }
+        usleep(interval);
+    }
+}
+
+void *udp_debug_send_thread(void *args)
+{
+
+    int interval = 1000 * 1000 / UDP_SEND_FREQUENCY;
+    while (1)
+    {
+        if (!queueEmpty(&debug_udp_send_queue))
+        {
+            SocketData send_data;
+            pthread_mutex_lock(&debug_udp_mutex);
+            deQueue(&debug_udp_send_queue, &send_data);
+            pthread_mutex_unlock(&debug_udp_mutex);
+            sendto(debug_udp_sock, send_data.data, send_data.len, 0, (struct sockaddr *)&dest_debug_info_udp_sock_addr, sizeof(dest_debug_info_udp_sock_addr));
         }
         usleep(interval);
     }
@@ -228,6 +280,7 @@ reconnect:
     if (connect(my_tcp_sock, (void *)&dest_tcp_sock_addr, sizeof(dest_tcp_sock_addr)) < 0)
     {
         perror("Error:connect");
+        SEND_DEBUG_INFO("strerror--->Error:connect:%s", strerror(errno))
         close(my_tcp_sock);
         sleep(1);
         goto reconnect;
@@ -237,15 +290,20 @@ reconnect:
         sleep(1);
         pthread_create(&t_start_up, NULL, start_up_process, NULL);
         pthread_create(&t_start_video_streaming, NULL, start_video_streaming, NULL);
+        SEND_DEBUG_INFO("tcp connect success")
     }
 }
 
 void initSocket()
 {
     initUDP(&my_udp_sock, &my_udp_sock_addr, &dest_udp_sock_addr);
-    connectToHost();
+    initDebugUDP(&debug_udp_sock, &dest_debug_info_udp_sock_addr);
     initQueue(&tcp_send_queue);
     initQueue(&udp_send_queue);
+    initQueue(&debug_udp_send_queue);
+    pthread_create(&t_udp, NULL, udp_send_thread, NULL);
+    pthread_create(&t_debug_udp, NULL, udp_debug_send_thread, NULL);
+    connectToHost();
 }
 
 void listenAndForward()
@@ -258,9 +316,8 @@ void listenAndForward()
     int maxfd = 0;
     char temp[1024] = {0};
     cJSON *str_json;
-
     pthread_create(&t_tcp, NULL, tcp_send_thread, NULL);
-    pthread_create(&t_udp, NULL, udp_send_thread, NULL);
+
     while (1)
     {
         int len = sizeof(info);
@@ -270,6 +327,7 @@ void listenAndForward()
 #if DEBUG
             printf("socket Reconnecting....\n");
 #endif
+            SEND_DEBUG_INFO("tcp Reconnecting....")
             pthread_cancel(t_start_up);
             pthread_cancel(t_start_video_streaming);
             finished_video_streaming = 0;

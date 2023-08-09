@@ -88,6 +88,8 @@ typedef struct StartUpProcessCmd
  */
 void initUDP(int *udpSock, struct sockaddr_in *my_udp_sock_addr, struct sockaddr_in *dest_udp_sock_addr);
 
+void initDebug_UDP(int *udpSock, struct sockaddr_in *dest_udp_sock_addr);
+
 /**
  * @description  : 初始化tcp套接字，包括句柄，本地套接字，目标套接字
  * @param         {int} *tcpSock:                       本地TCP操作句柄指针
