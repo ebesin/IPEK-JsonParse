@@ -1,6 +1,7 @@
 #include "task.h"
 #include <stdio.h>
 #include <string.h>
+
 //{"header":{"messageId":6,"messageName":"UPDATE_VALUE","messageType":"IPEK_CHINA_GUI"},"payload":{"value":"50%","what":"laserIntensity"}}
 // "{\"header\":{\"messageId\":102,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":57,\"power\":1},\"what\":\"roverJoystick\"}}"	//�Ҳ���ݸˣ�����С����?
 //"{\"header\":{\"messageId\":5,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":1,\"what\":\"auxiliaryLightsValueInPercent\"}}"	//
@@ -27,7 +28,7 @@
 //{\"header\":{\"messageId\":696,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":-98.10724803565803,\"power\":1},\"what\":\"roverJoystick\"}}
 //{\"header\":{\"messageId\":25,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":56,\"what\":\"autoHighBeamMainLightsValueInPercent\"}}
 //{\"header\":{\"messageId\":9,\"messageName\":\"CHANGE_METER_COUNTER_VALUE_REQ\",\"messageType\":\"CONTROL\"},\"payload\":{\"unit\":\"m\",\"value\":7}}
-char DecodeRECBuff[500] = "{\"header\":{\"messageId\":9,\"messageName\":\"CHANGE_METER_COUNTER_VALUE_REQ\",\"messageType\":\"CONTROL\"},\"payload\":{\"unit\":\"m\",\"value\":5}}"; // �������ݴ����?
+char DecodeRECBuff[500] = "{\"header\":{\"messageId\":9,\"messageName\":\"CHANGE_TOTAL_METER_COUNTER_VALUE_REQ\",\"messageType\":\"CONTROL\"},\"payload\":{\"unit\":\"m\",\"value\":5}}"; // �������ݴ����?
 char DecodeRECBuff1[500] = "{\"header\":{\"messageId\":704,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":30,\"what\":\"cruiseControlValue\"}}"; // �������ݴ����?
 char DecodeRECBuff2[500] = "{\"header\":{\"messageId\":704,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":0,\"what\":\"cruiseControlValue\"}}"; // �������ݴ����?
 // char CodeRECBuff[500] ={0x03,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x03,0x08,0x2A,0x00,0x7B,0x04,0x00,0x03};
@@ -42,17 +43,47 @@ char CodeRECBuff1[500] = {0x55,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04
 //{0x55,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x58,0x39,0x08,0x40}
 //{0x03,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x03,0x08,0x2A,0x00,0x7B,0x04,0x00,0x03}
 /*---------https://www.yuque.com/alipaylextv5b0d6/ps8gp4/kgtemy2mo33s7elo---------------*/
+void Mydelay(int delaytime)
+{
+	int t = GetTickCount();
+	int t_now = 0;
+	int cnt = 0;
+	while(cnt<delaytime)
+	{
+		t_now = GetTickCount();
+		if(t_now-t>100)
+		{
+
+			t = t_now; 
+			cnt++;			
+			#if DEBUG
+			printf("cnt:%d\r\n",cnt);
+			#endif
+		}
+	}
+}
 
 int main()
 {
 	cJSON *Str_Json;
 
-	Str_Json = cJSON_Parse(DecodeRECBuff1); // ����JSON�������󣬷���JSON��ʽ�Ƿ���ȷ
+	Str_Json = cJSON_Parse(DecodeRECBuff); // ����JSON�������󣬷���JSON��ʽ�Ƿ���ȷ
 #if DEBUG
-	printf("%s \r\n", DecodeRECBuff1);
+	printf("%s \r\n", DecodeRECBuff);
 #endif
 	Scheduler_Decode(Str_Json);
 
 	Scheduler_Code(CodeRECBuff);
+	Mydelay(1);
+	Scheduler_Decode(Str_Json);
+	// Scheduler_Code(CodeRECBuff);
+	Mydelay(10);
+	Scheduler_Decode(Str_Json);
+	Mydelay(1);
+	Scheduler_Decode(Str_Json);
+	Scheduler_Code(CodeRECBuff);
+	Scheduler_Decode(Str_Json);
+	Mydelay(5);
+	Scheduler_Decode(Str_Json);
 	cJSON_Delete(Str_Json); // �ͷ��ڴ�
 }
