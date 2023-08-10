@@ -8,6 +8,10 @@
         "memory": "c",
         "istream": "c",
         "tuple": "c",
-        "utility": "c"
+        "utility": "c",
+        "cjson.h": "c",
+        "task.h": "c",
+        "circle_queue.h": "c",
+        "my_socket.h": "c"
     }
 }

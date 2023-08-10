@@ -24,6 +24,9 @@
 #include <sys/select.h>
 #include <string.h>
 #include "cDefine.h"
+#include "circle_queue.h"
+#include <pthread.h>
+#include "../json_code/task.h"
 #include "../common/cJSON.h"
 
 /**
@@ -78,6 +81,21 @@ typedef struct StartUpProcessCmd
     char cmd[50];     // 指令
     double send_time; // 发送时间
 } StartUpProcessCmd;
+
+extern CircleQueue debug_udp_send_queue;
+extern pthread_mutex_t debug_udp_mutex;
+
+#define SEND_DEBUG_INFO(fmt, ...)                                  \
+    {                                                              \
+        char debug_info[200];                                      \
+        SocketData socket_data;                                    \
+        socket_data.len = sprintf(debug_info, fmt, ##__VA_ARGS__); \
+        for (int i = 0; i < socket_data.len; i++)                  \
+            socket_data.data[i] = debug_info[i];                   \
+        pthread_mutex_lock(&debug_udp_mutex);                      \
+        enQueue(&debug_udp_send_queue, &socket_data);              \
+        pthread_mutex_unlock(&debug_udp_mutex);                    \
+    }
 
 /**
  * @description  : 初始化udp套接字，包括句柄，本地套接字，目标套接字
@@ -156,5 +174,7 @@ void *tcp_send_thread(void *arg);
  * @return        {*}
  */
 long int getCurrentTime();
+
+// void SEND_DEBUG_INFO(char *format, ...);
 
 #endif
