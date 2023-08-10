@@ -1388,6 +1388,25 @@ void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
 	scvalue = RxMessage.Data[5];
 	scvalue = scvalue >= 0 && scvalue <= 100 && datatoint16.value >= 0 ? scvalue : 0;
 
+	#if DEBUGSEND
+	if(scvalue==0)
+	{
+		SEND_DEBUG_INFO("CANID:%x \r\n", RxMessage.ExtId);
+		SEND_DEBUG_INFO("Data:");
+
+//		printf("CANID:%x \r\n", RxMessage.ExtId);
+//		printf("Data:");
+		for (uint8_t i = 0; i < RxMessage.DLC; i++)
+		{
+			SEND_DEBUG_INFO("%x ", RxMessage.Data[i]);
+//			printf("%x ", RxMessage.Data[i]);
+		}
+		SEND_DEBUG_INFO("\r\n");
+
+//		printf("\r\n");
+	}
+
+	#endif
 	cjson_can = cJSON_CreateObject();
 
 	cjson_header = cJSON_CreateObject();
@@ -1584,7 +1603,7 @@ void CMSG_ROVVERPRESSURE_CODE(void)
 
 	sendToApp(TCPSendBuff);
 
-	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("pressureInHpa"));
+	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("pressureInMbar"));
 	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatoint16_t.value));
 
 	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
@@ -1920,8 +1939,6 @@ void Scheduler_Code(uint8_t *CANToWiFiRecBuff)
 	}
 	}
 
-	//			USART3_DMA_TxConfig((u32*)UDPSendBuff,CAN_Cnt);
-	//			if(DEBUG==1)printf("接收到CAN%d帧数据\n",cnt_can);
 }
 //{"header":{"messageId":6,"messageName":"UPDATE_VALUE","messageType":"IPEK_CHINA_GUI"},"payload":{"value":"50%","what":"laserIntensity"}}
 // "{\"header\":{\"messageId\":102,\"messageName\":\"UPDATE_VALUE\",\"messageType\":\"IPEK_CHINA_GUI\"},\"payload\":{\"value\":{\"angle\":57,\"power\":1},\"what\":\"roverJoystick\"}}"	//右侧操纵杆（控制小车）
