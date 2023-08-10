@@ -1584,7 +1584,7 @@ void CMSG_ROVVERPRESSURE_CODE(void)
 
 	sendToApp(TCPSendBuff);
 
-	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("pressureInHpa"));
+	cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("pressureInMbar"));
 	cJSON_ReplaceItemInObject(cjson_payload, "value", cJSON_CreateNumber(datatoint16_t.value));
 
 	TCPSendBuff = cJSON_PrintUnformatted(cjson_can);
