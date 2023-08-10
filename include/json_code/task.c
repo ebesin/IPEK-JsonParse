@@ -21,14 +21,19 @@ float CAN_cntmeter = 0.0f;
 float total_diff = 0.0f;
 float section_diff = 0.0f;
 uint8_t cruise_flag = 0;
-uint8_t cntmeter_flag = 1;//初始值为1，用于判断是否可以设置全局和区域计米器数值
+uint8_t cntmeter_flag = 1; // 初始值为1，用于判断是否可以设置全局和区域计米器数值
 unsigned long GetTickCount(void)
 {
-    struct timespec ts;
+	struct timespec ts;
 
-    clock_gettime(CLOCK_MONOTONIC, &ts);
+	clock_gettime(CLOCK_MONOTONIC, &ts);
 
-    return (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+	return (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+
+	// struct timeval tp;
+	// gettimeofday(&tp, 0);
+
+	// return tp.tv_usec;
 }
 /**
  * @description  : 小车遥感换算函数，0-360
@@ -457,7 +462,7 @@ static void cableReelType_ENCODE(cJSON *STR_Payload) // 手动模式自动模式
 {
 
 	char *str_payload_value = cJSON_GetObjectItem(STR_Payload, "value")->valuestring;
-	if(strcmp(str_payload_value, "automatic") == 0) //
+	if (strcmp(str_payload_value, "automatic") == 0) //
 		SendReelFunctionCodeEvent(0);
 	else
 	{
@@ -516,7 +521,7 @@ static void cruiseControlStatus_ENCODE(cJSON *STR_Payload) // 开启/关闭定�
 	else
 	{
 		SendCrawlerSpeedValue(0, 0, 0);
-		cruise_flag = 0; 
+		cruise_flag = 0;
 	}
 
 #if DEBUG
@@ -1184,21 +1189,26 @@ static void CHANGE_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // 改变�
 {
 	double section_countmeter_value = cJSON_GetObjectItem(STR_Payload, "value")->valuedouble;
 	SetTime = GetTickCount();
-	cntmeter_flag = (SetTime - RecTime)>500 ? 1 : 0;
-	if(cntmeter_flag)
+	cntmeter_flag = (SetTime - RecTime) > 500 ? 1 : 0;
+	if (cntmeter_flag)
 	{
 		section_diff = section_countmeter_value - CAN_cntmeter;
-		#if DEBUG
-			printf("设置成功,section_diff:%f\r\n",section_diff);
-		#endif
+#if DEBUGSEND
+		SEND_DEBUG_INFO("设置成功,section_diff:%f\r\n", section_diff);
+#endif
+#if DEBUG
+		printf("设置成功,section_diff:%f\r\n", section_diff);
+#endif
 	}
 	else
 	{
-		#if DEBUG
-			printf("设置失败,section_diff:%f\r\n",section_diff);
-		#endif		
+#if DEBUGSEND
+		SEND_DEBUG_INFO("设置失败,section_diff:%f\r\n", section_diff);
+#endif
+#if DEBUG
+		printf("设置失败,section_diff:%f\r\n", section_diff);
+#endif
 	}
-
 
 #if DEBUG
 	printf("CHANGE_METER_COUNTER_VALUE_REQ_ENCODE\r\n");
@@ -1214,25 +1224,30 @@ static void CHANGE_TOTAL_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // �
 {
 	double section_countmeter_value = cJSON_GetObjectItem(STR_Payload, "value")->valuedouble;
 	SetTime = GetTickCount();
-	cntmeter_flag = (SetTime - RecTime)>500 ? 1 : 0;
-	if(cntmeter_flag)
+	cntmeter_flag = (SetTime - RecTime) > 500 ? 1 : 0;
+	if (cntmeter_flag)
 	{
 		total_diff = section_countmeter_value - CAN_cntmeter;
-		#if DEBUG
-			printf("设置成功,total_diff:%f\r\n",total_diff);
-		#endif
+#if DEBUGSEND
+		SEND_DEBUG_INFO("设置成功,total_diff:%f\r\n", total_diff);
+#endif
+#if DEBUG
+		printf("设置成功,total_diff:%f\r\n", total_diff);
+#endif
 	}
 	else
 	{
-		#if DEBUG
-			printf("设置失败,total_diff:%f\r\n",total_diff);
-		#endif		
+#if DEBUGSEND
+		SEND_DEBUG_INFO("设置失败,total_diff:%f\r\n", total_diff);
+#endif
+#if DEBUG
+		printf("设置失败,total_diff:%f\r\n", total_diff);
+#endif
 	}
 #if DEBUG
 	printf("CHANGE_TOTAL_METER_COUNTER_VALUE_REQ_ENCODE\r\n");
 #endif
 }
-
 
 /**
  * @description  : 结构体数组，一级指令，根据messageName值做一级判断
@@ -1243,13 +1258,13 @@ static void CHANGE_TOTAL_METER_COUNTER_VALUE_REQ_ENCODE(cJSON *STR_Payload) // �
 JsonDecode_task_t JsonDecode_tasks[] = // 从上往下代表优先级
 	{
 
-		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"},			   // 开关机
-		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"},								   // Full stop
-		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},									   // UPDATE_VALUE
-		{ACTION_ENCODE, "ACTION"},												   // ACTION
-		{START_VIDEO_STREAMING_RESP_ENCODE, "START_VIDEO_STREAMING_RESP"},		   // 开机回复
-		{APPLICATION_CLOSED_ENCODE, "APPLICATION_CLOSED"},						   // 关机处理
-		{CHANGE_METER_COUNTER_VALUE_REQ_ENCODE, "CHANGE_METER_COUNTER_VALUE_REQ"}, // 改变参考数值 section_countmeter
+		{CHANGE_OBJECT_VALUE_REQ_ENCODE, "CHANGE_OBJECT_VALUE_REQ"},						   // 开关机
+		{EMERGENCY_STOP_ENCODE, "EMERGENCY_STOP"},											   // Full stop
+		{UPDATE_VALUE_ENCODE, "UPDATE_VALUE"},												   // UPDATE_VALUE
+		{ACTION_ENCODE, "ACTION"},															   // ACTION
+		{START_VIDEO_STREAMING_RESP_ENCODE, "START_VIDEO_STREAMING_RESP"},					   // 开机回复
+		{APPLICATION_CLOSED_ENCODE, "APPLICATION_CLOSED"},									   // 关机处理
+		{CHANGE_METER_COUNTER_VALUE_REQ_ENCODE, "CHANGE_METER_COUNTER_VALUE_REQ"},			   // 改变参考数值 section_countmeter
 		{CHANGE_TOTAL_METER_COUNTER_VALUE_REQ_ENCODE, "CHANGE_TOTAL_METER_COUNTER_VALUE_REQ"}, // 改变参考数值 section_countmeter
 };
 
@@ -1436,7 +1451,6 @@ void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
 // 	return NubFloat;
 // }
 
-
 /**
  * @description  : CMSG_METERCNT1VALUE编码，左侧米计数器功能（待确定）
  * @return        {*}
@@ -1477,7 +1491,7 @@ void CMSG_METERCNT1VALUE_CODE(void)
 	CAN_Cnt = strlen(TCPSendBuff);
 	RecTime = GetTickCount();
 #if DEBUG
-	printf("RecTime:%d, vaule_f:%f, CAN_cntmeter:%f, section_diff:%f, total_diff:%f\r\n", RecTime,vaule_f,CAN_cntmeter,section_diff,total_diff);
+	printf("RecTime:%d, vaule_f:%f, CAN_cntmeter:%f, section_diff:%f, total_diff:%f\r\n", RecTime, vaule_f, CAN_cntmeter, section_diff, total_diff);
 	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
 	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
 
@@ -1490,7 +1504,7 @@ void CMSG_METERCNT1VALUE_CODE(void)
 													-------------------
 													-----------------*/
 	sendToApp(TCPSendBuff);
-	
+
 	vaule_f = CAN_cntmeter + total_diff;
 	// vaule = FloatToString(vaule_f);
 	cJSON_ReplaceItemInObject(cjson_header, "messageName", cJSON_CreateString("TOTAL_METER_COUNTER_STATUS_IND"));
@@ -1622,9 +1636,9 @@ void CMSG_INCLINATIONXDEG_CODE(void)
 	else if ((scState == 01) || (scState == 02))
 	{
 		cJSON_AddStringToObject(cjson_payload, "value", "critical");
-		if(cruise_flag == 1)
+		if (cruise_flag == 1)
 		{
-			SendCrawlerSpeedValue(0,0,0);
+			SendCrawlerSpeedValue(0, 0, 0);
 		}
 	}
 
@@ -1657,16 +1671,13 @@ void CMSG_INCLINATIONXDEG_CODE(void)
 	CAN_Cnt = strlen(TCPSendBuff);
 	sendToApp(TCPSendBuff);
 
-	
 #if DEBUG
 	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
 
 	printf("TCPSendBuff:%s \r\n", TCPSendBuff);
 #endif
 
-
-
-	if(((scState == 01) || (scState == 02)) && (cruise_flag == 1))
+	if (((scState == 01) || (scState == 02)) && (cruise_flag == 1))
 	{
 		cruise_flag = 0;
 		cJSON_ReplaceItemInObject(cjson_payload, "what", cJSON_CreateString("cruiseControlStatus"));
@@ -1676,11 +1687,11 @@ void CMSG_INCLINATIONXDEG_CODE(void)
 		strncat(TCPSendBuff, enter, 2);
 		CAN_Cnt = strlen(TCPSendBuff);
 		sendToApp(TCPSendBuff);
-		#if DEBUG
+#if DEBUG
 		printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
 
 		printf("TCPSendBuff:%s \r\n", TCPSendBuff);
-		#endif
+#endif
 	}
 
 	cJSON_Delete(cjson_can); // 释放内存

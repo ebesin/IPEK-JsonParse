@@ -44,13 +44,13 @@ extern char *TCPSendBuff;
 extern uint32_t rec_cnt;
 extern uint32_t rec_err_cnt;
 extern float err_rate;
-extern float CAN_cntmeter,total_diff,section_diff;
+extern float CAN_cntmeter, total_diff, section_diff;
 /**
  * @description  : Json编码、解码相关函�?
  */
 extern void Scheduler_Decode(cJSON *str_json);		   // Pad To MCU 调用
 extern void Scheduler_Code(uint8_t *CANToWiFiRecBuff); // MCU To Pad 调用
-extern void RockerConversion(SCHAR *scV1, SCHAR *scV2, double angle, double power);
+// extern void RockerConversion(SCHAR *scV1, SCHAR *scV2, double angle, double power);
 extern void StartUp(void);
 extern void ShutDown(void);
 extern int getCurrentTimeSMs(void);

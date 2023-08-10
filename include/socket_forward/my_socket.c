@@ -9,9 +9,6 @@
  * Copyright (c) 2023 by iPEK, All Rights Reserved.
  */
 #include "my_socket.h"
-#include "circle_queue.h"
-#include <pthread.h>
-#include "../json_code/task.h"
 
 // udp句柄
 int my_udp_sock = -1;
@@ -56,18 +53,6 @@ pthread_mutex_t tcp_mutex = PTHREAD_MUTEX_INITIALIZER;
 // 调试互斥锁
 pthread_mutex_t debug_udp_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-#define SEND_DEBUG_INFO(fmt, ...)                                  \
-    {                                                              \
-        char debug_info[200];                                      \
-        SocketData socket_data;                                    \
-        socket_data.len = sprintf(debug_info, fmt, ##__VA_ARGS__); \
-        for (int i = 0; i < socket_data.len; i++)                  \
-            socket_data.data[i] = debug_info[i];                   \
-        pthread_mutex_lock(&debug_udp_mutex);                      \
-        enQueue(&debug_udp_send_queue, &socket_data);              \
-        pthread_mutex_unlock(&debug_udp_mutex);                    \
-    }
-
 void initUDP(int *udp_sock, struct sockaddr_in *my_udp_sock_addr, struct sockaddr_in *dest_udp_sock_addr)
 {
     if ((*udp_sock = socket(PF_INET, SOCK_DGRAM, 0)) < 0)
@@ -83,7 +68,7 @@ void initUDP(int *udp_sock, struct sockaddr_in *my_udp_sock_addr, struct sockadd
     if (bind(*udp_sock, (struct sockaddr *)my_udp_sock_addr, sizeof(*my_udp_sock_addr)) < 0)
     {
         perror("Error:bindudp");
-        SEND_DEBUG_INFO("strerror-->Error:create udp socket:%s", strerror(errno))
+        SEND_DEBUG_INFO("strerror-->Error:create udp socket:%s", strerror(errno));
         exit(1);
     }
     // 绑定目标udp套接字
@@ -110,7 +95,7 @@ void initTCP(int *tcp_sock, struct sockaddr_in *my_tcp_addr, struct sockaddr_in 
     if ((*tcp_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         perror("Error:socket");
-        SEND_DEBUG_INFO("strerror-->Error:create tcp sock:%s", strerror(errno))
+        SEND_DEBUG_INFO("strerror-->Error:create tcp sock:%s", strerror(errno));
         exit(1);
     }
     int opt = 1;
@@ -126,7 +111,7 @@ void initTCP(int *tcp_sock, struct sockaddr_in *my_tcp_addr, struct sockaddr_in 
     if (bind(*tcp_sock, (struct sockaddr *)my_tcp_addr, sizeof(*my_tcp_addr)) < 0)
     {
         perror("Error:bindtcp");
-        SEND_DEBUG_INFO("strerror-->Error:bindtcp:%s", strerror(errno))
+        SEND_DEBUG_INFO("strerror-->Error:bindtcp:%s", strerror(errno));
         exit(1);
     }
 
@@ -280,7 +265,7 @@ reconnect:
     if (connect(my_tcp_sock, (void *)&dest_tcp_sock_addr, sizeof(dest_tcp_sock_addr)) < 0)
     {
         perror("Error:connect");
-        SEND_DEBUG_INFO("strerror--->Error:connect:%s", strerror(errno))
+        SEND_DEBUG_INFO("strerror--->Error:connect:%s", strerror(errno));
         close(my_tcp_sock);
         sleep(1);
         goto reconnect;
@@ -290,7 +275,7 @@ reconnect:
         sleep(1);
         pthread_create(&t_start_up, NULL, start_up_process, NULL);
         pthread_create(&t_start_video_streaming, NULL, start_video_streaming, NULL);
-        SEND_DEBUG_INFO("tcp connect success")
+        SEND_DEBUG_INFO("tcp connect success");
     }
 }
 
@@ -327,7 +312,7 @@ void listenAndForward()
 #if DEBUG
             printf("socket Reconnecting....\n");
 #endif
-            SEND_DEBUG_INFO("tcp Reconnecting....")
+            SEND_DEBUG_INFO("tcp Reconnecting....");
             pthread_cancel(t_start_up);
             pthread_cancel(t_start_video_streaming);
             finished_video_streaming = 0;
