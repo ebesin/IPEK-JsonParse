@@ -1391,19 +1391,16 @@ void CMSG_LIFTPOSITION_ELEVATOR_CODE(void)
 	#if DEBUGSEND
 	if(scvalue==0)
 	{
+		SEND_DEBUG_INFO("**************************ERROR*********************\r\n");
 		SEND_DEBUG_INFO("CANID:%x \r\n", RxMessage.ExtId);
-		SEND_DEBUG_INFO("Data:");
-
+		SEND_DEBUG_INFO("elevatorValueInPercent:%d ,elevatorValueInMm:%d \r\n",RxMessage.Data[5],datatoint16.value);
+		SEND_DEBUG_INFO("***************************************************\r\n");
+		// printf("**************************ERROR*********************\r\n");	
+		// printf("CANID:%x \r\n", RxMessage.ExtId);
+		// printf("elevatorValueInPercent:%d ,elevatorValueInMm:%d \r\n",RxMessage.Data[5],datatoint16.value);
+		// printf("***************************************************\r\n");
 //		printf("CANID:%x \r\n", RxMessage.ExtId);
 //		printf("Data:");
-		for (uint8_t i = 0; i < RxMessage.DLC; i++)
-		{
-			SEND_DEBUG_INFO("%x ", RxMessage.Data[i]);
-//			printf("%x ", RxMessage.Data[i]);
-		}
-		SEND_DEBUG_INFO("\r\n");
-
-//		printf("\r\n");
 	}
 
 	#endif
