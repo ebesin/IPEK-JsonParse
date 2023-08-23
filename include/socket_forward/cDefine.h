@@ -31,6 +31,6 @@
 // #define DEST_TCP_IP "192.168.1.93" // tcp�?标ip
 
 #define DEBUG 0
-#define DEBUGSEND 1
+#define DEBUGSEND 0
 
 #endif

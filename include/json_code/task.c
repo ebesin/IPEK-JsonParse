@@ -1586,6 +1586,11 @@ void CMSG_ROVVERPRESSURE_CODE(void)
 	char *enter = "\n\0";
 	strncat(TCPSendBuff, enter, 2);
 	CAN_Cnt = strlen(TCPSendBuff);
+	#if DEBUGSEND
+		SEND_DEBUG_INFO("*************CMSG_ROVVERPRESSURE_CODE**************\r\n");
+		SEND_DEBUG_INFO("压力状态CAN指令解析成功 \r\n");
+		SEND_DEBUG_INFO("***************************************************\r\n");
+	#endif
 #if DEBUG
 	printf("CANBuff_cnt:%d \r\n", CAN_Cnt);
 
@@ -1931,7 +1936,13 @@ void Scheduler_Code(uint8_t *CANToWiFiRecBuff)
 #if DEBUG
 		// printf("CAN指令错误\r\n");
 #endif
-		MESSAGEID--;
+
+	#if DEBUGSEND
+		SEND_DEBUG_INFO("**************************CANDECODEERROR***********\r\n");
+		SEND_DEBUG_INFO("无此ID,CANID:%x \r\n", CANID);
+		SEND_DEBUG_INFO("***************************************************\r\n");
+	#endif
+//		MESSAGEID--;
 		break;
 	}
 	}
